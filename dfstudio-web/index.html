@@ -6,7 +6,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0A0A1A">
-    <meta name="description" content="DF Studio - Estúdio de áudio profissional em tempo real">
     <title>DF Studio Pro</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -14,32 +13,15 @@
     <link rel="stylesheet" href="css/style.css">
     <style>
         .start-btn {
-            padding: 15px 50px;
-            background: #FF6D00;
-            color: #FFF;
-            border: none;
-            border-radius: 30px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 20px;
-            box-shadow: 0 0 20px rgba(255,109,0,0.4);
-            animation: pulse 2s infinite;
+            padding: 15px 50px; background: #FF6D00; color: #FFF; border: none;
+            border-radius: 30px; font-size: 18px; font-weight: 700; cursor: pointer;
+            margin-top: 20px; box-shadow: 0 0 20px rgba(255,109,0,0.4); animation: pulse 2s infinite;
         }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        .error-msg {
-            color: #FF1744;
-            font-size: 12px;
-            margin-top: 10px;
-            text-align: center;
-        }
+        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+        .error-msg { color: #FF1744; font-size: 12px; margin-top: 10px; text-align: center; max-width: 280px; }
     </style>
 </head>
 <body>
-    <!-- Splash Screen -->
     <div id="splash" class="splash">
         <div class="splash-logo">🎤 DF STUDIO</div>
         <div class="splash-sub">Estúdio Profissional</div>
@@ -48,157 +30,82 @@
         <div id="errorMsg" class="error-msg"></div>
     </div>
 
-    <!-- App Principal -->
     <div id="app" class="app" style="display:none">
-        <!-- Top Bar -->
         <header class="top-bar">
-            <div class="device-selector">
-                <select id="inputDevice" class="device-select"><option value="">🎤 Microfone</option></select>
-                <select id="outputDevice" class="device-select"><option value="">🔊 Saída</option></select>
-            </div>
-            <div class="stats-bar">
-                <span id="latency">0ms</span>
-                <span id="cpuLoad">0%</span>
-            </div>
-            <button id="tunerBtn" class="btn-icon" onclick="openTuner()">🎸</button>
+            <div class="stats-bar"><span id="latency">--</span><span id="cpuLoad">--</span></div>
+            <button class="btn-icon" onclick="alert('Afinador em breve')">🎸</button>
         </header>
 
-        <!-- Player Bar -->
         <div class="player-bar">
-            <div class="track-info">
-                <span id="trackName" class="track-name">Nenhuma música</span>
-                <span id="markerCount" class="marker-count">0</span>
-            </div>
-            <div class="progress-bar">
-                <input type="range" id="seekBar" min="0" max="1000" value="0" class="seek-slider">
-                <div id="markerDots" class="marker-dots"></div>
-            </div>
-            <div class="time-display">
-                <span id="currentTime">00:00</span>
-                <span id="durationTime">00:00</span>
-            </div>
+            <div class="track-info"><span id="trackName">Nenhuma música</span><span id="markerCount">0</span></div>
+            <div class="progress-bar"><input type="range" id="seekBar" min="0" max="1000" value="0" class="seek-slider"></div>
+            <div class="time-display"><span id="currentTime">00:00</span><span id="durationTime">00:00</span></div>
             <div class="player-controls">
-                <button onclick="prevTrack()" class="btn-icon">⏮</button>
                 <button onclick="prevMarker()" class="btn-icon marker-nav">⏪</button>
                 <button id="playBtn" onclick="togglePlay()" class="btn-play">▶️</button>
                 <button onclick="nextMarker()" class="btn-icon marker-nav">⏩</button>
-                <button onclick="nextTrack()" class="btn-icon">⏭</button>
                 <button onclick="showMarkerDialog()" class="btn-icon">📍</button>
-                <button id="uploadBtn" class="btn-icon" onclick="document.getElementById('fileInput').click()">📁</button>
+                <button class="btn-icon" onclick="document.getElementById('fileInput').click()">📁</button>
                 <input type="file" id="fileInput" accept="audio/*" style="display:none" onchange="handleFileUpload(event)">
                 <button onclick="stopTrack()" class="btn-icon">⏹</button>
             </div>
         </div>
 
-        <!-- Mixer -->
         <div class="mixer">
-            <!-- Canal VOZ -->
             <div class="channel voice-channel">
                 <div class="channel-header">🎤 VOZ</div>
-                <div class="knob-container">
-                    <input type="range" id="micGain" class="knob" min="0" max="100" value="65" orient="vertical">
-                    <label>Ganho</label>
-                </div>
-                <div class="fx-buttons">
-                    <button id="fxBtn" class="btn-fx active" onclick="toggleFx()">FX</button>
-                    <button id="atBtn" class="btn-fx" onclick="toggleAutotune()">AT</button>
-                </div>
-                <div class="pan-buttons">
-                    <button class="btn-pan" onclick="setPan('voice',-1)">L</button>
-                    <button class="btn-pan active" onclick="setPan('voice',0)">C</button>
-                    <button class="btn-pan" onclick="setPan('voice',1)">R</button>
-                </div>
-                <div class="mute-solo">
-                    <button class="btn-solo" onclick="toggleSolo('voice')">S</button>
-                    <button class="btn-mute" onclick="toggleMute('voice')">M</button>
-                </div>
-                <div class="vu-meter" id="voiceVu"></div>
-                <div class="fader-container">
-                    <input type="range" id="voiceFader" class="fader" min="0" max="100" value="50" orient="vertical">
-                    <label>Fader</label>
-                </div>
+                <div class="knob-container"><input type="range" id="micGain" class="knob" min="0" max="100" value="65" orient="vertical"><label>Ganho</label></div>
+                <div class="fx-buttons"><button id="fxBtn" class="btn-fx active" onclick="toggleFx()">FX</button><button id="atBtn" class="btn-fx" onclick="toggleAutotune()">AT</button></div>
+                <div class="pan-buttons"><button class="btn-pan" onclick="setPan('voice',-1)">L</button><button class="btn-pan active" onclick="setPan('voice',0)">C</button><button class="btn-pan" onclick="setPan('voice',1)">R</button></div>
+                <div class="mute-solo"><button class="btn-solo" onclick="toggleSolo('voice')">S</button><button class="btn-mute" onclick="toggleMute('voice')">M</button></div>
+                <div class="vu-meter" id="voiceVu"><div class="vu-fill"></div></div>
+                <div class="fader-container"><input type="range" id="voiceFader" class="fader" min="0" max="100" value="50" orient="vertical"><label>Fader</label></div>
             </div>
-
-            <!-- Canal PLAY -->
             <div class="channel play-channel">
                 <div class="channel-header">🎵 PLAY</div>
-                <div class="knob-container">
-                    <input type="range" id="playGain" class="knob" min="0" max="100" value="40" orient="vertical">
-                    <label>Ganho</label>
-                </div>
-                <div class="mono-btn">
-                    <button id="playMonoBtn" class="btn-mono" onclick="togglePlayMono()">MONO</button>
-                </div>
-                <div class="pan-buttons">
-                    <button class="btn-pan" onclick="setPan('play',-1)">L</button>
-                    <button class="btn-pan active" onclick="setPan('play',0)">C</button>
-                    <button class="btn-pan" onclick="setPan('play',1)">R</button>
-                </div>
-                <div class="mute-solo">
-                    <button class="btn-solo" onclick="toggleSolo('play')">S</button>
-                    <button class="btn-mute" onclick="toggleMute('play')">M</button>
-                </div>
-                <div class="vu-meter" id="playVu"></div>
-                <div class="fader-container">
-                    <input type="range" id="playFader" class="fader" min="0" max="100" value="50" orient="vertical">
-                    <label>Fader</label>
-                </div>
+                <div class="knob-container"><input type="range" id="playGain" class="knob" min="0" max="100" value="40" orient="vertical"><label>Ganho</label></div>
+                <div class="mono-btn"><button id="playMonoBtn" class="btn-mono" onclick="togglePlayMono()">MONO</button></div>
+                <div class="pan-buttons"><button class="btn-pan" onclick="setPan('play',-1)">L</button><button class="btn-pan active" onclick="setPan('play',0)">C</button><button class="btn-pan" onclick="setPan('play',1)">R</button></div>
+                <div class="mute-solo"><button class="btn-solo" onclick="toggleSolo('play')">S</button><button class="btn-mute" onclick="toggleMute('play')">M</button></div>
+                <div class="vu-meter" id="playVu"><div class="vu-fill"></div></div>
+                <div class="fader-container"><input type="range" id="playFader" class="fader" min="0" max="100" value="50" orient="vertical"><label>Fader</label></div>
             </div>
-
-            <!-- Canal MASTER -->
             <div class="channel master-channel">
                 <div class="channel-header">🔊 MASTER</div>
-                <div class="monitor-switch">
-                    <button id="monitorBtn" class="btn-monitor" onclick="toggleMonitor()">MON SW</button>
-                </div>
-                <div class="pan-buttons">
-                    <button class="btn-pan" onclick="setPan('master',-1)">L</button>
-                    <button class="btn-pan active" onclick="setPan('master',0)">C</button>
-                    <button class="btn-pan" onclick="setPan('master',1)">R</button>
-                </div>
-                <div class="mute-solo">
-                    <button class="btn-mute" onclick="toggleMute('master')">M</button>
-                </div>
-                <div class="vu-meter" id="masterVuL"></div>
-                <div class="vu-meter" id="masterVuR"></div>
-                <div class="fader-container">
-                    <input type="range" id="masterFader" class="fader" min="0" max="100" value="50" orient="vertical">
-                    <label>Fader</label>
-                </div>
+                <div class="monitor-switch"><button id="monitorBtn" class="btn-monitor" onclick="toggleMonitor()">MON</button></div>
+                <div class="pan-buttons"><button class="btn-pan" onclick="setPan('master',-1)">L</button><button class="btn-pan active" onclick="setPan('master',0)">C</button><button class="btn-pan" onclick="setPan('master',1)">R</button></div>
+                <div class="mute-solo"><button class="btn-mute" onclick="toggleMute('master')">M</button></div>
+                <div class="vu-meter" id="masterVuL"><div class="vu-fill"></div></div>
+                <div class="vu-meter" id="masterVuR"><div class="vu-fill"></div></div>
+                <div class="fader-container"><input type="range" id="masterFader" class="fader" min="0" max="100" value="50" orient="vertical"><label>Fader</label></div>
             </div>
         </div>
 
-        <!-- Bottom Navigation -->
         <nav class="bottom-nav">
-            <button class="nav-btn active" onclick="switchTab('mixer')">🎛️ Mixer</button>
-            <button class="nav-btn" onclick="switchTab('effects')">🎚️ Efeitos</button>
-            <button class="nav-btn" onclick="switchTab('autotune')">🎤 Robot</button>
-            <button class="nav-btn" onclick="switchTab('library')">📚 Lib</button>
-            <button class="nav-btn" onclick="switchTab('settings')">⚙️ Config</button>
+            <button class="nav-btn active">🎛️ Mixer</button>
+            <button class="nav-btn">🎚️ Efeitos</button>
+            <button class="nav-btn">🎤 Robot</button>
+            <button class="nav-btn">📚 Lib</button>
+            <button class="nav-btn">⚙️ Config</button>
         </nav>
     </div>
 
-    <!-- Diálogo de Marcador -->
     <div id="markerDialog" class="dialog" style="display:none">
         <div class="dialog-content">
             <h3>Novo Marcador</h3>
             <input type="text" id="markerName" placeholder="Nome do marcador">
             <label><input type="checkbox" id="useCurrentTime" checked onchange="toggleManualTime()"> Usar tempo atual</label>
             <div id="manualTime" style="display:none">
-                <input type="number" id="markerMin" placeholder="MIN" min="0" max="99" style="width:55px">:
-                <input type="number" id="markerSec" placeholder="SEG" min="0" max="59" style="width:55px">.
-                <input type="number" id="markerMs" placeholder="MS" min="0" max="999" style="width:65px">
+                <input type="number" id="markerMin" placeholder="MIN" min="0" max="99" style="width:50px"> :
+                <input type="number" id="markerSec" placeholder="SEG" min="0" max="59" style="width:50px"> .
+                <input type="number" id="markerMs" placeholder="MS" min="0" max="999" style="width:60px">
             </div>
             <button onclick="saveMarker()">SALVAR</button>
             <button onclick="closeMarkerDialog()">CANCELAR</button>
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="js/audio-engine.js"></script>
-    <script src="js/effects.js"></script>
-    <script src="js/markers.js"></script>
-    <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
