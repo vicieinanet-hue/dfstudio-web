@@ -70,7 +70,6 @@
         .nav-bar button .nav-icon{font-size:14px}
         .nav-bar .active{color:var(--orange);border-top-color:var(--orange)}
 
-        /* SCREENS */
         .screen{flex:1;overflow-y:auto;padding:8px;display:none}
         .screen.active{display:block}
         .fx-card{background:var(--surface);border-radius:8px;border:1px solid var(--border);margin-bottom:6px;overflow:hidden}
@@ -121,7 +120,6 @@
 </head>
 <body>
 
-<!-- SPLASH -->
 <div id="splash" class="splash">
     <div class="splash-logo">🎤 DF STUDIO</div>
     <div class="splash-sub">Estúdio Profissional</div>
@@ -131,10 +129,8 @@
     <button id="startBtn" style="display:none" onclick="initAudio()">COMEÇAR</button>
 </div>
 
-<!-- APP -->
 <div id="app" class="app" style="display:none">
 
-    <!-- TOP BAR -->
     <div class="topbar">
         <div class="title">DF STUDIO BETA</div>
         <div class="stats">
@@ -146,7 +142,6 @@
         <button style="background:none;border:1px solid var(--teal);color:var(--teal);padding:2px 6px;border-radius:3px;font-size:8px;font-weight:700;cursor:pointer" onclick="switchTab('tuner')">🎸</button>
     </div>
 
-    <!-- PLAYER -->
     <div class="player">
         <div class="info"><div class="name" id="trackName">🎵 Nenhuma música</div><div class="badge" id="markerCount">0 marc</div></div>
         <div class="seek"><input type="range" id="seekBar" min="0" max="1000" value="0"></div>
@@ -162,9 +157,6 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════ -->
-    <!-- TELA 1: MIXER -->
-    <!-- ═══════════════════════════════════════════════ -->
     <div id="screenMixer" class="mixer screen active">
         <div class="channel voice">
             <div class="ch-name">🎤 VOZ</div>
@@ -195,13 +187,8 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════ -->
-    <!-- TELA 2: EFEITOS -->
-    <!-- ═══════════════════════════════════════════════ -->
     <div id="screenEffects" class="screen">
-        <div class="fx-card">
-            <div class="fx-header"><span>🎛️ FX MASTER</span><button id="fxMasterBtn" class="toggle on" onclick="toggleFxMaster()">ON</button></div>
-        </div>
+        <div class="fx-card"><div class="fx-header"><span>🎛️ FX MASTER</span><button id="fxMasterBtn" class="toggle on" onclick="toggleFxMaster()">ON</button></div></div>
         <div class="fx-card">
             <div class="fx-header"><span>🏛️ REVERB</span><button id="reverbBtn" class="toggle" onclick="toggleReverb()">OFF</button></div>
             <div class="fx-body" id="reverbBody" style="display:none">
@@ -227,9 +214,6 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════ -->
-    <!-- TELA 3: AUTOTUNE (ROBOT) -->
-    <!-- ═══════════════════════════════════════════════ -->
     <div id="screenAutotune" class="screen">
         <div class="fx-card">
             <div class="fx-header"><span>🎤 AUTO-TUNE</span><button id="autotuneMasterBtn" class="toggle" onclick="toggleAutotuneMaster()">OFF</button></div>
@@ -251,9 +235,6 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════ -->
-    <!-- TELA 4: AFINADOR -->
-    <!-- ═══════════════════════════════════════════════ -->
     <div id="screenTuner" class="screen">
         <div class="tuner-display">
             <div class="tuner-note" id="tunerNote" style="color:var(--teal)">--</div>
@@ -264,7 +245,6 @@
         </div>
     </div>
 
-    <!-- NAV BAR -->
     <div class="nav-bar">
         <button class="active" onclick="switchTab('mixer')"><span class="nav-icon">🎛️</span>MIXER</button>
         <button onclick="switchTab('effects')"><span class="nav-icon">🎚️</span>EFEITOS</button>
@@ -273,7 +253,6 @@
     </div>
 </div>
 
-<!-- MARKER DIALOG -->
 <div class="dialog" id="markerDialog">
     <div class="dlg">
         <h3>📍 NOVO MARCADOR</h3>
