@@ -9,7 +9,6 @@
     <title>DF Studio Pro - Web</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        /* ===== RESET E VARIÁVEIS ===== */
         :root {
             --bg: #060610;
             --surface: #0E0E24;
@@ -51,12 +50,10 @@
             inset: 0;
         }
 
-        /* ===== SCROLLBAR ===== */
         ::-webkit-scrollbar { width: 3px; height: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--orange); border-radius: 4px; }
 
-        /* ===== SPLASH ===== */
         .splash {
             display: flex;
             flex-direction: column;
@@ -96,7 +93,6 @@
         .log { color: var(--text2); font-size: 12px; margin-top: 12px; text-align: center; }
         .err { color: var(--warning); font-size: 12px; margin-top: 6px; text-align: center; }
 
-        /* ===== APP CONTAINER ===== */
         .app {
             display: none;
             flex-direction: column;
@@ -108,7 +104,6 @@
         }
         .app.visible { display: flex; }
 
-        /* ===== TOP BAR ===== */
         .topbar {
             display: flex;
             align-items: center;
@@ -159,7 +154,6 @@
             transform: scale(0.95);
         }
 
-        /* ===== PLAYER ===== */
         .player {
             background: var(--surface);
             padding: 4px 12px 6px;
@@ -249,7 +243,6 @@
         .player .play-btn:active { background: var(--teal) !important; color: var(--bg) !important; }
         .player .marker-btn { border-color: var(--orange) !important; color: var(--orange) !important; }
 
-        /* ===== MIXER ===== */
         .mixer {
             display: flex;
             flex: 1;
@@ -286,7 +279,6 @@
         .play .ch-name { color: var(--teal); }
         .master .ch-name { color: var(--orange); }
 
-        /* ===== KNOB ===== */
         .knob-wrap {
             display: flex;
             flex-direction: column;
@@ -315,7 +307,6 @@
             height: 0;
         }
 
-        /* ===== BUTTONS ===== */
         .btn-row {
             display: flex;
             gap: 3px;
@@ -353,7 +344,6 @@
             border-color: var(--warning);
         }
 
-        /* ===== VU METER ===== */
         .vu {
             width: 80%;
             height: 16px;
@@ -373,7 +363,6 @@
             transition: height .05s;
         }
 
-        /* ===== FADER ===== */
         .fader-wrap {
             display: flex;
             flex-direction: column;
@@ -407,7 +396,6 @@
             cursor: pointer;
         }
 
-        /* ===== NAV BAR ===== */
         .nav-bar {
             display: flex;
             background: var(--surface);
@@ -441,7 +429,6 @@
         }
         .nav-bar button:active { transform: scale(0.92); }
 
-        /* ===== PANELS ===== */
         .panel {
             display: none !important;
             flex-direction: column;
@@ -455,7 +442,6 @@
             display: flex !important;
         }
 
-        /* ===== EFFECTS ===== */
         .effect-card {
             background: var(--surface);
             border-radius: 12px;
@@ -509,7 +495,6 @@
             text-align: right;
         }
 
-        /* ===== AUTO-TUNE ===== */
         .piano-row {
             display: flex;
             gap: 4px;
@@ -539,7 +524,6 @@
         .piano-key.sharp { background: #1A1A3A; border-color: #444; }
         .piano-key.sharp.active { background: var(--orange-dim); border-color: var(--orange-dim); }
 
-        /* ===== TOGGLE SWITCH ===== */
         .toggle-switch {
             position: relative;
             width: 40px;
@@ -565,7 +549,6 @@
         }
         .toggle-switch.active .thumb { left: 20px; }
 
-        /* ===== DIALOGS ===== */
         .dialog {
             position: fixed;
             top: 0;
@@ -624,7 +607,6 @@
         .dlg .time-inputs input { width: 50px; text-align: center; }
         .dlg .time-inputs span { color: var(--text2); font-weight: 700; font-size: 18px; }
 
-        /* ===== MARKERS LIST ===== */
         .markers-list {
             max-height: 300px;
             overflow-y: auto;
@@ -645,7 +627,6 @@
         .marker-item .name { color: var(--text); font-size: 13px; flex: 1; margin: 0 10px; }
         .marker-item .del { color: var(--warning); cursor: pointer; font-size: 16px; padding: 4px; }
 
-        /* ===== TUNER ===== */
         #tunerNote {
             font-size: 56px;
             font-weight: 900;
@@ -665,7 +646,6 @@
             text-align: center;
         }
 
-        /* ===== LIBRARY ===== */
         .library-item {
             display: flex;
             justify-content: space-between;
@@ -679,7 +659,11 @@
         .library-item .name { color: var(--text); font-size: 13px; flex: 1; }
         .library-item .size { color: var(--text2); font-size: 10px; margin: 0 8px; }
 
-        /* ===== RESPONSIVE ===== */
+        .latency-badge {
+            color: var(--green) !important;
+            font-weight: 900;
+        }
+
         @media (min-width: 600px) {
             .topbar { padding: 8px 20px; min-height: 52px; }
             .topbar .title { font-size: 18px; }
@@ -756,7 +740,6 @@
 </head>
 <body>
 
-<!-- ===== SPLASH ===== -->
 <div id="splash" class="splash">
     <div class="splash-logo">🎤 DF STUDIO</div>
     <div class="splash-sub">Estúdio Profissional - Web</div>
@@ -766,20 +749,17 @@
     <button id="startBtn" style="display:none" onclick="initAudio()">🎙️ INICIAR</button>
 </div>
 
-<!-- ===== APP ===== -->
 <div id="app" class="app">
-    <!-- TOP BAR -->
     <div class="topbar">
         <div class="title">DF STUDIO BETA</div>
         <div class="stats">
             <span id="sampleRate">48k</span> |
             <span id="bufferSize">128b</span> |
-            LAT <span id="latency">0ms</span>
+            LAT <span id="latency" class="latency-badge">0ms</span>
         </div>
         <button class="tuner-btn" onclick="openTuner()">🎸 AFINADOR</button>
     </div>
 
-    <!-- PLAYER -->
     <div class="player">
         <div class="info">
             <div class="name" id="trackName">🎵 Nenhuma música carregada</div>
@@ -805,9 +785,7 @@
         </div>
     </div>
 
-    <!-- MIXER -->
     <div class="mixer" id="mixerContainer">
-        <!-- Canal VOZ -->
         <div class="channel voice" id="channelVoice">
             <div class="ch-name">🎤 VOZ</div>
             <div class="knob-wrap">
@@ -834,7 +812,6 @@
             </div>
         </div>
 
-        <!-- Canal PLAY -->
         <div class="channel play" id="channelPlay">
             <div class="ch-name">🎵 PLAY</div>
             <div class="knob-wrap">
@@ -860,7 +837,6 @@
             </div>
         </div>
 
-        <!-- Canal MASTER -->
         <div class="channel master" id="channelMaster">
             <div class="ch-name">🔊 MASTER</div>
             <div class="knob-wrap">
@@ -887,7 +863,6 @@
         </div>
     </div>
 
-    <!-- NAV BAR -->
     <div class="nav-bar">
         <button class="active" data-tab="mixer" onclick="switchTab('mixer')">
             <span class="nav-icon">🎛️</span> MIXER
@@ -906,7 +881,6 @@
         </button>
     </div>
 
-    <!-- EFFECTS PANEL -->
     <div id="effectsPanel" class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
             <span style="font-weight:900;color:var(--orange);font-size:18px;">🎚️ EFEITOS</span>
@@ -915,7 +889,6 @@
             </div>
         </div>
 
-        <!-- REVERB -->
         <div class="effect-card">
             <div class="header">
                 <label>🏛️ REVERB</label>
@@ -930,7 +903,6 @@
             </div>
         </div>
 
-        <!-- DELAY -->
         <div class="effect-card">
             <div class="header">
                 <label>⏳ DELAY</label>
@@ -955,7 +927,6 @@
             </div>
         </div>
 
-        <!-- CHORUS -->
         <div class="effect-card">
             <div class="header">
                 <label>🌊 CHORUS</label>
@@ -975,7 +946,6 @@
             </div>
         </div>
 
-        <!-- EQ -->
         <div class="effect-card">
             <div class="header">
                 <label>🎛️ EQ</label>
@@ -1000,7 +970,6 @@
             </div>
         </div>
 
-        <!-- COMPRESSOR -->
         <div class="effect-card">
             <div class="header">
                 <label>📊 COMPRESSOR</label>
@@ -1020,7 +989,6 @@
             </div>
         </div>
 
-        <!-- GATE -->
         <div class="effect-card">
             <div class="header">
                 <label>🚪 NOISE GATE</label>
@@ -1036,7 +1004,6 @@
         </div>
     </div>
 
-    <!-- AUTO-TUNE PANEL -->
     <div id="autotunePanel" class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
             <span style="font-weight:900;color:var(--orange);font-size:18px;">🎤 AUTO-TUNE</span>
@@ -1094,7 +1061,6 @@
         </div>
     </div>
 
-    <!-- LIBRARY PANEL -->
     <div id="libraryPanel" class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;">
             <span style="font-weight:900;color:var(--teal);font-size:18px;">📚 BIBLIOTECA</span>
@@ -1105,7 +1071,6 @@
         <div id="libraryList"></div>
     </div>
 
-    <!-- SETTINGS PANEL -->
     <div id="settingsPanel" class="panel">
         <span style="font-weight:900;color:var(--orange);font-size:18px;">⚙️ AJUSTES</span>
         
@@ -1141,7 +1106,6 @@
     </div>
 </div>
 
-<!-- MARKER DIALOG -->
 <div class="dialog" id="markerDialog">
     <div class="dlg">
         <h3>📍 NOVO MARCADOR</h3>
@@ -1162,7 +1126,6 @@
     </div>
 </div>
 
-<!-- MARKERS LIST DIALOG -->
 <div class="dialog" id="markersListDialog">
     <div class="dlg">
         <h3>📋 MARCADORES</h3>
@@ -1171,7 +1134,6 @@
     </div>
 </div>
 
-<!-- TUNER DIALOG -->
 <div class="dialog" id="tunerDialog">
     <div class="dlg" style="text-align:center;">
         <h3>🎸 AFINADOR</h3>
