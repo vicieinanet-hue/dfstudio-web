@@ -20,77 +20,108 @@
         *{margin:0;padding:0;box-sizing:border-box}
         body{
             font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-            background:var(--bg);color:var(--text);height:100vh;overflow:hidden;
-            user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
-            display:flex;flex-direction:column;
+            background:var(--bg);color:var(--text);height:100vh;height:100dvh;
+            overflow:hidden;user-select:none;-webkit-user-select:none;
+            -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;
         }
         .topbar{
             display:flex;align-items:center;justify-content:space-between;
             padding:6px 10px;background:var(--surface);border-bottom:1px solid var(--border);
+            min-height:40px;
         }
         .topbar .title{font-weight:900;color:var(--orange);font-size:13px;letter-spacing:1px}
-        .topbar .stats{font-size:9px;color:var(--text2);font-family:monospace;display:flex;gap:6px}
+        .topbar .stats{font-size:8px;color:var(--text2);font-family:monospace;display:flex;gap:5px}
         .topbar .stats span{color:var(--teal)}
         .player{
-            background:var(--surface);padding:6px 10px;border-bottom:1px solid var(--border);
+            background:var(--surface);padding:5px 10px;border-bottom:1px solid var(--border);
         }
         .player .info{display:flex;justify-content:space-between;align-items:center}
-        .player .name{font-weight:700;font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .player .badge{background:rgba(255,109,0,0.2);color:var(--orange);padding:2px 7px;border-radius:8px;font-size:9px;font-weight:700;margin-left:6px}
-        .player .seek{margin:3px 0}
-        .player .seek input{width:100%;height:4px;-webkit-appearance:none;background:#222;border-radius:2px;outline:none}
-        .player .seek input::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--teal);border-radius:50%}
-        .player .time{display:flex;justify-content:space-between;font-size:9px;color:var(--text2);font-family:monospace}
-        .player .ctrls{display:flex;justify-content:space-around;align-items:center;margin-top:4px}
-        .player .ctrls button{background:none;border:1px solid #333;color:var(--text2);border-radius:50%;width:28px;height:28px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-        .player .play-btn{width:36px;height:36px;border:2px solid var(--teal)!important;color:var(--teal)!important;background:rgba(0,188,212,0.12)!important;font-size:16px!important}
+        .player .name{font-weight:700;font-size:10px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .player .badge{background:rgba(255,109,0,0.2);color:var(--orange);padding:1px 6px;border-radius:6px;font-size:8px;font-weight:700;margin-left:4px}
+        .player .seek{margin:2px 0}
+        .player .seek input{width:100%;height:3px;-webkit-appearance:none;background:#222;border-radius:2px;outline:none}
+        .player .seek input::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;background:var(--teal);border-radius:50%}
+        .player .time{display:flex;justify-content:space-between;font-size:8px;color:var(--text2);font-family:monospace}
+        .player .ctrls{display:flex;justify-content:space-around;align-items:center;margin-top:3px;gap:2px}
+        .player .ctrls button{background:none;border:1px solid #333;color:var(--text2);border-radius:50%;width:26px;height:26px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+        .player .play-btn{width:32px;height:32px;border:2px solid var(--teal)!important;color:var(--teal)!important;background:rgba(0,188,212,0.12)!important;font-size:14px!important}
         .player .marker-btn{border-color:var(--orange)!important;color:var(--orange)!important}
-        .mixer{display:flex;flex:1;gap:3px;padding:3px}
-        .channel{flex:1;background:var(--surface);border-radius:8px;display:flex;flex-direction:column;align-items:center;padding:5px 3px;border:2px solid #1A1A3A;gap:3px}
+
+        .mixer{display:flex;flex:1;gap:2px;padding:2px;min-height:0}
+        .channel{flex:1;background:var(--surface);border-radius:6px;display:flex;flex-direction:column;align-items:center;padding:4px 2px;border:2px solid #1A1A3A;gap:2px;min-width:0}
         .channel.voice{border-color:var(--orange)}
         .channel.play{border-color:var(--teal)}
         .channel.master{border-color:var(--orange)}
-        .ch-name{font-size:8px;font-weight:900;letter-spacing:.5px;margin-bottom:1px}
+        .ch-name{font-size:7px;font-weight:900;letter-spacing:.3px}
         .voice .ch-name{color:var(--orange)}.play .ch-name{color:var(--teal)}.master .ch-name{color:var(--orange)}
-        .knob-wrap{display:flex;flex-direction:column;align-items:center}
-        .knob-wrap label{font-size:6px;color:var(--text2);margin-top:1px}
-        .knob{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#1A1A3A;border:2px solid #333;cursor:pointer;outline:none}
-        .btn-row{display:flex;gap:2px;width:100%}
-        .btn-row button{flex:1;padding:3px 1px;border-radius:3px;border:1px solid #333;background:var(--surface2);color:var(--text2);font-size:7px;font-weight:700;cursor:pointer}
+        .knob{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#1A1A3A;border:2px solid #333;cursor:pointer;outline:none}
+        .btn-row{display:flex;gap:1px;width:100%}
+        .btn-row button{flex:1;padding:3px 0;border-radius:3px;border:1px solid #333;background:var(--surface2);color:var(--text2);font-size:6px;font-weight:700;cursor:pointer;overflow:hidden;text-overflow:ellipsis}
         .btn-row .active{background:rgba(255,109,0,0.2);color:var(--orange);border-color:var(--orange)}
         .btn-row .solo-active{background:rgba(118,255,3,0.15);color:var(--green);border-color:var(--green)}
         .btn-row .mute-active{background:rgba(255,23,68,0.2);color:var(--warning);border-color:var(--warning)}
-        .vu{width:80%;height:14px;background:#000;border-radius:2px;overflow:hidden;border:1px solid #1A1A3A}
-        .vu .fill{height:0%;background:linear-gradient(to top,var(--green) 60%,#FFD600 80%,var(--warning) 100%);transition:height .08s}
-        .fader-wrap{display:flex;flex-direction:column;align-items:center;flex:1}
-        .fader-wrap label{font-size:6px;color:var(--text2);margin-top:2px}
-        .fader{-webkit-appearance:slider-vertical;width:16px;flex:1;min-height:50px;background:#1A1A3A;outline:none;border-radius:3px}
-        .fader::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:14px;background:#555;border-radius:3px;border:1px solid #777}
-        .nav-bar{display:flex;background:var(--surface);border-top:1px solid var(--border)}
-        .nav-bar button{flex:1;padding:8px;background:none;border:none;color:var(--text2);font-size:8px;font-weight:700;cursor:pointer;border-top:2px solid transparent}
+        .vu{width:75%;height:10px;background:#000;border-radius:1px;overflow:hidden;border:1px solid #1A1A3A}
+        .vu .fill{height:0%;background:linear-gradient(to top,var(--green) 60%,#FFD600 80%,var(--warning) 100%);transition:height .06s}
+        .fader{-webkit-appearance:slider-vertical;width:14px;flex:1;min-height:40px;background:#1A1A3A;outline:none;border-radius:3px}
+        .fader::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:12px;background:#555;border-radius:2px;border:1px solid #777}
+
+        .nav-bar{display:flex;background:var(--surface);border-top:1px solid var(--border);min-height:40px}
+        .nav-bar button{flex:1;padding:6px 0;background:none;border:none;color:var(--text2);font-size:7px;font-weight:700;cursor:pointer;border-top:2px solid transparent;display:flex;flex-direction:column;align-items:center;gap:2px}
+        .nav-bar button .nav-icon{font-size:14px}
         .nav-bar .active{color:var(--orange);border-top-color:var(--orange)}
+
+        /* SCREENS */
+        .screen{flex:1;overflow-y:auto;padding:8px;display:none}
+        .screen.active{display:block}
+        .fx-card{background:var(--surface);border-radius:8px;border:1px solid var(--border);margin-bottom:6px;overflow:hidden}
+        .fx-header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;font-weight:700;font-size:13px;border-bottom:1px solid var(--border)}
+        .fx-body{padding:10px 12px}
+        .slider-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+        .slider-row label{width:50px;font-size:9px;color:var(--text2);font-weight:700}
+        .slider-row input{flex:1;height:4px;-webkit-appearance:none;background:#222;border-radius:2px;outline:none}
+        .slider-row input::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--orange);border-radius:50%}
+        .slider-row span{width:38px;font-size:10px;color:var(--teal);font-weight:700;text-align:right;font-family:monospace}
+        .toggle{padding:5px 12px;border-radius:12px;border:1px solid #333;background:#1A1A3A;color:var(--text2);font-size:10px;font-weight:700;cursor:pointer}
+        .toggle.on{background:rgba(255,109,0,0.2);color:var(--orange);border-color:var(--orange)}
+
+        .key-grid{display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
+        .key-btn{width:28px;height:28px;border-radius:4px;border:1px solid #333;background:var(--surface2);color:var(--text2);font-size:10px;font-weight:700;cursor:pointer}
+        .key-btn.active{background:var(--orange);color:#000;border-color:var(--orange)}
+
         .dialog{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:100}
-        .dlg{background:var(--surface);padding:20px;border-radius:12px;width:90%;max-width:320px;display:flex;flex-direction:column;gap:10px;border:1px solid var(--border)}
-        .dlg h3{color:var(--orange);text-align:center;font-size:16px}
-        .dlg input{padding:8px;border-radius:6px;border:1px solid #333;background:var(--bg);color:var(--text);font-size:14px}
-        .dlg button{padding:10px;border-radius:6px;border:none;font-weight:700;cursor:pointer;font-size:13px}
+        .dlg{background:var(--surface);padding:16px;border-radius:10px;width:90%;max-width:300px;display:flex;flex-direction:column;gap:8px;border:1px solid var(--border)}
+        .dlg h3{color:var(--orange);text-align:center;font-size:14px}
+        .dlg input{padding:7px;border-radius:5px;border:1px solid #333;background:var(--bg);color:var(--text);font-size:13px}
+        .dlg button{padding:8px;border-radius:5px;border:none;font-weight:700;cursor:pointer;font-size:12px}
         .dlg .btn-save{background:var(--orange);color:#FFF}
         .dlg .btn-cancel{background:#333;color:var(--text2)}
-        .dlg .time-inputs{display:flex;gap:4px;align-items:center}
-        .dlg .time-inputs input{width:48px;text-align:center}
+        .dlg .time-inputs{display:flex;gap:3px;align-items:center}
+        .dlg .time-inputs input{width:42px;text-align:center;font-size:14px}
         .dlg .time-inputs span{color:var(--text2);font-weight:700}
-        .splash{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:var(--bg)}
-        .splash-logo{font-size:2em;font-weight:900;color:var(--orange)}
-        .splash-sub{color:var(--text2);margin:8px 0 20px}
-        .splash-loader{width:36px;height:36px;border:3px solid #222;border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite}
+
+        .tuner-display{text-align:center;padding:20px}
+        .tuner-note{font-size:48px;font-weight:900;font-family:monospace}
+        .tuner-freq{font-size:14px;color:var(--text2);margin-top:4px}
+        .tuner-cents{font-size:12px;margin-top:4px}
+        .tuner-strings{display:flex;gap:4px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+        .tuner-strings button{width:38px;height:50px;border-radius:6px;border:1px solid #333;background:var(--surface2);color:var(--text2);font-size:10px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+        .tuner-strings button .str-num{font-size:8px;color:var(--text2)}
+        .tuner-strings button .str-name{font-size:11px;color:var(--orange)}
+        .tuner-strings button.active{border-color:var(--orange);background:rgba(255,109,0,0.2)}
+
+        .splash{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;height:100dvh;background:var(--bg)}
+        .splash-logo{font-size:1.8em;font-weight:900;color:var(--orange)}
+        .splash-sub{color:var(--text2);margin:6px 0 16px;font-size:.85em}
+        .splash-loader{width:32px;height:32px;border:3px solid #222;border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
-        .splash button{padding:14px 44px;background:var(--orange);color:#FFF;border:none;border-radius:25px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px}
-        .log{color:var(--text2);font-size:11px;margin-top:8px;text-align:center}
-        .err{color:var(--warning);font-size:11px;margin-top:4px;text-align:center}
+        .splash button{padding:12px 36px;background:var(--orange);color:#FFF;border:none;border-radius:22px;font-size:14px;font-weight:700;cursor:pointer;margin-top:12px}
+        .log{color:var(--text2);font-size:10px;margin-top:6px;text-align:center}
+        .err{color:var(--warning);font-size:10px;margin-top:4px;text-align:center}
     </style>
 </head>
 <body>
 
+<!-- SPLASH -->
 <div id="splash" class="splash">
     <div class="splash-logo">🎤 DF STUDIO</div>
     <div class="splash-sub">Estúdio Profissional</div>
@@ -100,83 +131,154 @@
     <button id="startBtn" style="display:none" onclick="initAudio()">COMEÇAR</button>
 </div>
 
+<!-- APP -->
 <div id="app" class="app" style="display:none">
 
+    <!-- TOP BAR -->
     <div class="topbar">
         <div class="title">DF STUDIO BETA</div>
         <div class="stats">
-            <span id="sampleRate">48k</span> |
-            <span id="bufferSize">128b</span> |
-            LAT <span id="latency">0ms</span> |
+            <span id="sampleRate">48k</span>|
+            <span id="bufferSize">128b</span>|
+            LAT <span id="latency">0ms</span>|
             DSP <span id="cpuLoad">0%</span>
         </div>
-        <button style="background:none;border:1px solid var(--teal);color:var(--teal);padding:3px 8px;border-radius:4px;font-size:9px;font-weight:700;cursor:pointer">🎸 AFINADOR</button>
+        <button style="background:none;border:1px solid var(--teal);color:var(--teal);padding:2px 6px;border-radius:3px;font-size:8px;font-weight:700;cursor:pointer" onclick="switchTab('tuner')">🎸</button>
     </div>
 
+    <!-- PLAYER -->
     <div class="player">
-        <div class="info">
-            <div class="name" id="trackName">🎵 Nenhuma música carregada</div>
-            <div class="badge" id="markerCount">0 marc</div>
-        </div>
+        <div class="info"><div class="name" id="trackName">🎵 Nenhuma música</div><div class="badge" id="markerCount">0 marc</div></div>
         <div class="seek"><input type="range" id="seekBar" min="0" max="1000" value="0"></div>
         <div class="time"><span id="currentTime">00:00</span><span id="durationTime">00:00</span></div>
         <div class="ctrls">
-            <button onclick="prevTrack()">⏮</button>
             <button onclick="prevMarker()" class="marker-btn">⏪</button>
             <button id="playBtn" onclick="togglePlay()" class="play-btn">▶️</button>
             <button onclick="nextMarker()" class="marker-btn">⏩</button>
-            <button onclick="nextTrack()">⏭</button>
-            <button onclick="showMarkerDialog()" class="marker-btn">📍</button>
+            <button onclick="showMarkerDialog()">📍</button>
             <button onclick="document.getElementById('fileInput').click()">📁</button>
             <input type="file" id="fileInput" accept="audio/*" style="display:none" onchange="handleFileUpload(event)">
             <button onclick="stopTrack()">⏹</button>
         </div>
     </div>
 
-    <div class="mixer">
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- TELA 1: MIXER -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div id="screenMixer" class="mixer screen active">
         <div class="channel voice">
             <div class="ch-name">🎤 VOZ</div>
-            <div class="knob-wrap"><label>GANHO</label><input type="range" id="micGain" class="knob" min="0" max="100" value="65"></div>
+            <input type="range" id="micGain" class="knob" min="0" max="100" value="65">
             <div class="btn-row"><button id="fxBtn" class="active" onclick="toggleFx()">FX</button><button id="atBtn" onclick="toggleAutotune()">AT</button></div>
             <div class="btn-row"><button onclick="setPan('voice',-1)">L</button><button class="active" onclick="setPan('voice',0)">C</button><button onclick="setPan('voice',1)">R</button></div>
             <div class="btn-row"><button id="voiceSolo" onclick="toggleSolo('voice')">S</button><button id="voiceMute" onclick="toggleMute('voice')">M</button></div>
             <div class="vu"><div class="fill" id="voiceVuFill"></div></div>
-            <div class="fader-wrap"><input type="range" id="voiceFader" class="fader" min="0" max="100" value="50" orient="vertical"><label>FADER</label></div>
+            <input type="range" id="voiceFader" class="fader" min="0" max="100" value="50" orient="vertical">
         </div>
         <div class="channel play">
             <div class="ch-name">🎵 PLAY</div>
-            <div class="knob-wrap"><label>GANHO</label><input type="range" id="playGain" class="knob" min="0" max="100" value="40"></div>
+            <input type="range" id="playGain" class="knob" min="0" max="100" value="40">
             <div class="btn-row"><button id="playMonoBtn" onclick="togglePlayMono()">MONO</button></div>
             <div class="btn-row"><button onclick="setPan('play',-1)">L</button><button class="active" onclick="setPan('play',0)">C</button><button onclick="setPan('play',1)">R</button></div>
             <div class="btn-row"><button id="playSolo" onclick="toggleSolo('play')">S</button><button id="playMute" onclick="toggleMute('play')">M</button></div>
             <div class="vu"><div class="fill" id="playVuFill"></div></div>
-            <div class="fader-wrap"><input type="range" id="playFader" class="fader" min="0" max="100" value="50" orient="vertical"><label>FADER</label></div>
+            <input type="range" id="playFader" class="fader" min="0" max="100" value="50" orient="vertical">
         </div>
         <div class="channel master">
             <div class="ch-name">🔊 MASTER</div>
-            <div class="knob-wrap"><label>MONITOR</label><input type="range" id="monGain" class="knob" min="0" max="100" value="50"></div>
-            <div class="btn-row"><button id="monitorBtn" onclick="toggleMonitor()">MON SW</button></div>
+            <input type="range" id="monGain" class="knob" min="0" max="100" value="50">
+            <div class="btn-row"><button id="monitorBtn" onclick="toggleMonitor()">MON</button></div>
             <div class="btn-row"><button onclick="setPan('master',-1)">L</button><button class="active" onclick="setPan('master',0)">C</button><button onclick="setPan('master',1)">R</button></div>
             <div class="btn-row"><button style="visibility:hidden">S</button><button id="masterMute" onclick="toggleMute('master')">M</button></div>
             <div class="vu"><div class="fill" id="masterVuFill"></div></div>
-            <div class="fader-wrap"><input type="range" id="masterFader" class="fader" min="0" max="100" value="50" orient="vertical"><label>FADER</label></div>
+            <input type="range" id="masterFader" class="fader" min="0" max="100" value="50" orient="vertical">
         </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- TELA 2: EFEITOS -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div id="screenEffects" class="screen">
+        <div class="fx-card">
+            <div class="fx-header"><span>🎛️ FX MASTER</span><button id="fxMasterBtn" class="toggle on" onclick="toggleFxMaster()">ON</button></div>
+        </div>
+        <div class="fx-card">
+            <div class="fx-header"><span>🏛️ REVERB</span><button id="reverbBtn" class="toggle" onclick="toggleReverb()">OFF</button></div>
+            <div class="fx-body" id="reverbBody" style="display:none">
+                <div class="slider-row"><label>Mix</label><input type="range" id="reverbMix" min="0" max="100" value="25" oninput="updateReverb()"><span id="reverbMixVal">25%</span></div>
+                <div class="slider-row"><label>Decay</label><input type="range" id="reverbDecay" min="0" max="100" value="50" oninput="updateReverb()"><span id="reverbDecayVal">1.5s</span></div>
+            </div>
+        </div>
+        <div class="fx-card">
+            <div class="fx-header"><span>⏳ DELAY</span><button id="delayBtn" class="toggle" onclick="toggleDelay()">OFF</button></div>
+            <div class="fx-body" id="delayBody" style="display:none">
+                <div class="slider-row"><label>Mix</label><input type="range" id="delayMix" min="0" max="100" value="20" oninput="updateDelay()"><span id="delayMixVal">20%</span></div>
+                <div class="slider-row"><label>Time</label><input type="range" id="delayTime" min="1" max="100" value="25" oninput="updateDelay()"><span id="delayTimeVal">250ms</span></div>
+                <div class="slider-row"><label>Feedback</label><input type="range" id="delayFeedback" min="0" max="100" value="40" oninput="updateDelay()"><span id="delayFeedbackVal">40%</span></div>
+            </div>
+        </div>
+        <div class="fx-card">
+            <div class="fx-header"><span>🎛️ EQUALIZADOR</span><button id="eqBtn" class="toggle" onclick="toggleEq()">OFF</button></div>
+            <div class="fx-body" id="eqBody" style="display:none">
+                <div class="slider-row"><label>Graves</label><input type="range" id="eqLow" min="-12" max="12" value="0" oninput="updateEq()"><span id="eqLowVal">0 dB</span></div>
+                <div class="slider-row"><label>Médios</label><input type="range" id="eqMid" min="-12" max="12" value="0" oninput="updateEq()"><span id="eqMidVal">0 dB</span></div>
+                <div class="slider-row"><label>Agudos</label><input type="range" id="eqHigh" min="-12" max="12" value="0" oninput="updateEq()"><span id="eqHighVal">0 dB</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- TELA 3: AUTOTUNE (ROBOT) -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div id="screenAutotune" class="screen">
+        <div class="fx-card">
+            <div class="fx-header"><span>🎤 AUTO-TUNE</span><button id="autotuneMasterBtn" class="toggle" onclick="toggleAutotuneMaster()">OFF</button></div>
+            <div class="fx-body">
+                <div class="slider-row"><label>Velocidade</label><input type="range" id="atSpeed" min="1" max="50" value="14" oninput="updateAutotuneParams()"><span id="atSpeedVal">14ms</span></div>
+                <div class="slider-row"><label>Quantidade</label><input type="range" id="atAmount" min="0" max="100" value="65" oninput="updateAutotuneParams()"><span id="atAmountVal">65%</span></div>
+            </div>
+        </div>
+        <div class="fx-card">
+            <div class="fx-header"><span>🎹 TOM</span></div>
+            <div class="fx-body">
+                <div class="key-grid" id="keyGrid"></div>
+                <div style="display:flex;gap:4px;margin-top:6px">
+                    <button id="modeMajor" class="toggle on" onclick="setMode('MAIOR')" style="flex:1">MAIOR</button>
+                    <button id="modeMinor" class="toggle" onclick="setMode('MENOR')" style="flex:1">MENOR</button>
+                    <button id="modeChrom" class="toggle" onclick="setMode('CROM')" style="flex:1">CROM</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- TELA 4: AFINADOR -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div id="screenTuner" class="screen">
+        <div class="tuner-display">
+            <div class="tuner-note" id="tunerNote" style="color:var(--teal)">--</div>
+            <div class="tuner-freq" id="tunerFreq">0.0 Hz</div>
+            <div class="tuner-cents" id="tunerCents">0 ¢</div>
+            <div class="tuner-strings" id="tunerStrings"></div>
+            <button id="tunerToggleBtn" class="toggle on" onclick="toggleTuner()" style="margin-top:16px;padding:8px 20px;font-size:13px">🎸 AFINADOR ON</button>
+        </div>
+    </div>
+
+    <!-- NAV BAR -->
     <div class="nav-bar">
-        <button class="active">🎛️ MIXER</button>
-        <button>🎚️ EFEITOS</button>
-        <button>🎤 ROBOT</button>
-        <button>📚 BIB</button>
-        <button>⚙️ CONFIG</button>
+        <button class="active" onclick="switchTab('mixer')"><span class="nav-icon">🎛️</span>MIXER</button>
+        <button onclick="switchTab('effects')"><span class="nav-icon">🎚️</span>EFEITOS</button>
+        <button onclick="switchTab('autotune')"><span class="nav-icon">🎤</span>ROBOT</button>
+        <button onclick="switchTab('tuner')"><span class="nav-icon">🎸</span>AFINAR</button>
     </div>
 </div>
 
+<!-- MARKER DIALOG -->
 <div class="dialog" id="markerDialog">
     <div class="dlg">
         <h3>📍 NOVO MARCADOR</h3>
-        <input type="text" id="markerName" placeholder="Nome do marcador (ex: Refrão)">
-        <label style="font-size:11px;color:var(--text2)"><input type="checkbox" id="useCurrentTime" checked onchange="toggleManualTime()"> Usar tempo atual</label>
+        <input type="text" id="markerName" placeholder="Nome do marcador">
+        <label style="font-size:10px;color:var(--text2)"><input type="checkbox" id="useCurrentTime" checked onchange="toggleManualTime()"> Usar tempo atual</label>
         <div id="manualTime" style="display:none" class="time-inputs">
             <input type="number" id="markerMin" placeholder="MIN" min="0" max="99"> <span>:</span>
             <input type="number" id="markerSec" placeholder="SEG" min="0" max="59"> <span>.</span>
