@@ -1,11 +1,10 @@
 {
     "name": "DF Studio Pro",
     "short_name": "DF Studio",
-    "description": "Estúdio de áudio profissional em tempo real",
     "start_url": "/",
     "display": "standalone",
     "orientation": "portrait",
-    "background_color": "#0A0A1A",
+    "background_color": "#060610",
     "theme_color": "#FF6D00",
     "icons": [
         { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
