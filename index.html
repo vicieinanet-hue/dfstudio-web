@@ -1,465 +1,1030 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#080812">
+    <meta name="theme-color" content="#060610">
     <title>DF Studio Pro - Web</title>
     <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
     <style>
+        /* ===== CSS COMPLETO ===== */
         :root {
-            --bg: #080812; --surface: #12172A; --surfaceHigh: #1E293B; --surfaceVar: #0F172A;
-            --orange: #FF6D00; --teal: #00BCD4; --warning: #FF1744;
-            --text: #FFFFFF; --textSec: #94A3B8; --textDis: #475569;
-            --border: rgba(255, 255, 255, 0.1);
+            --bg: #060610;
+            --surface: #0E0E24;
+            --surface2: #12172A;
+            --surface-high: #1A1A3A;
+            --orange: #FF6D00;
+            --orange-dim: #BF4A00;
+            --teal: #00BCD4;
+            --teal-dim: #008A9E;
+            --warning: #FF1744;
+            --green: #76FF03;
+            --text: #EEE;
+            --text2: #999;
+            --border: #2A2A4A;
+            --shadow: rgba(0,0,0,0.6);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, sans-serif; user-select: none; -webkit-user-select: none; }
-        body { background: var(--bg); color: var(--text); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; max-width: 450px; margin: 0 auto; }
-        .mono { font-family: monospace; }
-        .bold { font-weight: 800; }
-        .devices-row { display: flex; gap: 6px; padding: 6px; }
-        .device-btn { flex: 1; background: var(--surface); border: 1px solid #333; border-radius: 7px; padding: 6px; display: flex; align-items: center; gap: 5px; color: var(--text); font-size: 10px; }
-        .stats-bar { display: flex; justify-content: space-evenly; background: var(--surface); padding: 4px; font-size: 9px; color: var(--textSec); border-bottom: 1px solid var(--border); }
-        .stats-bar span { color: var(--teal); font-weight: bold; }
-        .stats-bar .dsp { color: var(--orange); }
-        .presets-row { display: flex; gap: 4px; padding: 4px 6px; background: var(--surface); }
-        .preset-btn { flex: 1; height: 26px; border-radius: 4px; border: 1px solid rgba(255,109,0,0.5); background: rgba(255,109,0,0.12); color: var(--orange); font-size: 9px; font-weight: 900; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; cursor: pointer; }
-        .preset-btn.active { background: var(--orange); color: #000; }
-        .preset-btn.reset { border-color: rgba(255,23,68,0.5); background: rgba(255,23,68,0.12); color: var(--warning); }
-        .progress-bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(255,255,255,0.3); width: 0%; pointer-events: none; transition: width 0.5s linear; }
-        .player-widget { background: var(--surface); display: flex; flex-direction: column; border-bottom: 1px solid var(--border); }
-        .pw-header { display: flex; justify-content: space-between; padding: 6px 10px; align-items: center; }
-        .pw-title { font-size: 12px; font-weight: 900; display: flex; gap: 6px; align-items: center; overflow: hidden; }
-        .pw-title span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .pw-badge { background: rgba(255,109,0,0.15); color: var(--orange); border: 1px solid rgba(255,109,0,0.4); padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; white-space: nowrap; }
-        .pw-seek-row { display: flex; align-items: center; gap: 6px; padding: 2px 10px; font-size: 9px; color: var(--textSec); }
-        .seek-container { flex: 1; position: relative; height: 16px; display: flex; align-items: center; }
-        .seek-track { width: 100%; height: 6px; background: var(--surfaceHigh); border-radius: 3px; position: relative; overflow: hidden; }
-        .seek-fill { height: 100%; background: var(--teal); width: 0%; border-radius: 3px; transition: width 0.1s; }
-        .seek-marker { position: absolute; width: 2px; height: 8px; background: var(--orange); top: 4px; transform: translateX(-50%); z-index: 2; }
-        .seek-input { position: absolute; width: 100%; height: 100%; opacity: 0; margin: 0; z-index: 3; }
-        .pw-controls { display: flex; justify-content: space-evenly; align-items: center; padding: 6px 0; }
-        .pw-btn { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; background: none; border: none; color: var(--textSec); cursor: pointer; }
-        .pw-btn.play { width: 38px; height: 38px; border: 2px solid rgba(0,188,212,0.5); background: rgba(0,188,212,0.15); color: var(--teal); }
-        .pw-btn.orange { color: var(--orange); }
-        .strips-container { flex: 1; display: flex; gap: 3px; padding: 3px; overflow-y: hidden; min-height: 0; }
-        .strip { flex: 1; background: var(--surface); border: 1px solid var(--surfaceHigh); border-radius: 8px; display: flex; flex-direction: column; align-items: center; overflow: hidden; padding-bottom: 4px; min-width: 0; }
-        .strip.master { border-color: var(--orange); border-width: 2px; }
-        .strip-top { width: 100%; height: 2px; }
-        .strip-header { width: 100%; background: var(--surfaceHigh); padding: 4px; text-align: center; font-size: 9px; font-weight: 900; letter-spacing: 0.8px; display: flex; justify-content: center; align-items: center; gap: 4px; }
-        .param-row { width: 100%; padding: 2px 5px; display: flex; justify-content: space-between; font-size: 7px; color: var(--textSec); font-weight: 900; }
-        .param-val { font-family: monospace; }
-        .knob-container { width: 38px; height: 38px; position: relative; margin: 2px 0; touch-action: none; }
-        .knob-bg { position: absolute; inset: 0; border-radius: 50%; background: var(--surfaceHigh); border: 2px solid rgba(0,0,0,0.3); }
-        .knob-arc { position: absolute; inset: 2px; border-radius: 50%; }
-        .knob-dial { position: absolute; inset: 4px; border-radius: 50%; background: #222; display: flex; justify-content: center; transform: rotate(-135deg); }
-        .knob-dot { width: 3px; height: 3px; background: currentColor; border-radius: 50%; margin-top: 3px; }
-        .btn-row { display: flex; width: 100%; gap: 3px; padding: 0 5px; margin-bottom: 3px; }
-        .sm-btn { flex: 1; height: 20px; border-radius: 4px; border: 1px solid var(--surfaceHigh); background: var(--surfaceHigh); color: var(--textSec); font-size: 8px; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .sm-btn.active { background: rgba(255,109,0,0.14); border-color: var(--orange); color: var(--orange); }
-        .sm-btn.teal { color: var(--teal); }
-        .sm-btn.teal.active { background: rgba(0,188,212,0.14); border-color: var(--teal); }
-        .sm-btn.solo.active { background: #0A1800; border-color: #76FF03; color: #76FF03; }
-        .sm-btn.mute.active { background: #1A0000; border-color: var(--warning); color: var(--warning); }
-        .fader-area { flex: 1; display: flex; width: 100%; padding: 4px; gap: 4px; align-items: flex-end; }
-        .vu-container { width: 16px; height: 100%; background: rgba(0,0,0,0.45); border-radius: 2px; position: relative; }
-        canvas.vu-canvas { width: 100%; height: 100%; display: block; }
-        .fader-wrapper { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; }
-        .fader-val { font-size: 8px; font-weight: 900; margin-bottom: 2px; }
-        .fader-track-container { flex: 1; width: 100%; position: relative; display: flex; justify-content: center; touch-action: none; }
-        .fader-track { width: 4px; height: 100%; background: rgba(0,0,0,0.45); border-radius: 2px; position: relative; display: flex; align-items: flex-end; overflow: hidden; }
-        .fader-fill { width: 100%; background: currentColor; opacity: 0.65; transition: height 0.05s; }
-        .fader-thumb { position: absolute; width: 34px; height: 18px; background: linear-gradient(to bottom, #5A5A66, #303038, #585864); border: 1px solid rgba(255,255,255,0.18); border-radius: 4px; display: flex; justify-content: center; align-items: center; transform: translateY(-50%); pointer-events: none; left: 50%; transform: translateX(-50%) translateY(-50%); }
-        .fader-thumb-line { width: 62%; height: 2px; background: currentColor; }
-        .scale { display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding-bottom: 9px; font-size: 6px; color: var(--textSec); font-family: monospace; padding-left: 2px; }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 100; }
-        .dialog { background: var(--surface); padding: 16px; border-radius: 12px; width: 90%; max-width: 340px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
-        .dlg-title { color: #FFF; font-size: 18px; font-weight: 900; text-align: center; }
-        input[type="text"], input[type="number"] { width: 100%; background: var(--bg); border: 1px solid #333; color: #FFF; padding: 10px; border-radius: 6px; outline: none; font-size: 14px; }
-        input[type="text"]:focus { border-color: var(--orange); }
-        .btn-primary { background: var(--orange); color: #FFF; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .btn-sec { background: transparent; color: var(--textSec); border: none; padding: 12px; font-weight: bold; cursor: pointer; font-size: 14px; text-align: center; }
-        .marker-item { display: flex; align-items: center; background: var(--bg); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,188,212,0.2); margin-bottom: 8px; }
-        .marker-time { background: rgba(0,188,212,0.1); color: var(--teal); padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; }
-        .marker-name { flex: 1; margin: 0 10px; font-size: 13px; font-weight: bold; }
-        #startOverlay { position:fixed; inset:0; background:var(--bg); z-index:999; display:flex; align-items:center; justify-content:center; flex-direction:column; }
-        .start-btn { margin-top:20px; padding:15px 30px; background:var(--orange); color:#FFF; border:none; border-radius:30px; font-weight:bold; font-size:16px; cursor:pointer; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            display: flex;
+            flex-direction: column;
+        }
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 3px; height: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--orange); border-radius: 4px; }
+
+        /* ===== TOP BAR ===== */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 10px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            min-height: 36px;
+            flex-shrink: 0;
+        }
+        .topbar .title {
+            font-weight: 900;
+            color: var(--orange);
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+        .topbar .stats {
+            font-size: 8px;
+            color: var(--text2);
+            font-family: monospace;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .topbar .stats span { color: var(--teal); }
+        .topbar .tuner-btn {
+            background: none;
+            border: 1px solid var(--teal);
+            color: var(--teal);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .topbar .tuner-btn:hover { background: var(--teal); color: var(--bg); }
+
+        /* ===== PLAYER ===== */
+        .player {
+            background: var(--surface);
+            padding: 4px 10px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .player .info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .player .name {
+            font-weight: 700;
+            font-size: 11px;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .player .badge {
+            background: rgba(255,109,0,0.2);
+            color: var(--orange);
+            padding: 2px 7px;
+            border-radius: 8px;
+            font-size: 9px;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .player .seek { margin: 2px 0; }
+        .player .seek input {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #222;
+            border-radius: 2px;
+            outline: none;
+        }
+        .player .seek input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--teal);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .player .time {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: var(--text2);
+            font-family: monospace;
+        }
+        .player .ctrls {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 2px;
+            gap: 2px;
+        }
+        .player .ctrls button {
+            background: none;
+            border: 1px solid #333;
+            color: var(--text2);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .player .ctrls button:hover { border-color: #555; }
+        .player .ctrls button:active { transform: scale(0.92); }
+        .player .play-btn {
+            width: 36px;
+            height: 36px;
+            border: 2px solid var(--teal) !important;
+            color: var(--teal) !important;
+            background: rgba(0,188,212,0.12) !important;
+            font-size: 16px !important;
+        }
+        .player .marker-btn { border-color: var(--orange) !important; color: var(--orange) !important; }
+
+        /* ===== MIXER ===== */
+        .mixer {
+            display: flex;
+            flex: 1;
+            gap: 3px;
+            padding: 3px;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .channel {
+            flex: 1;
+            background: var(--surface);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 3px;
+            border: 2px solid var(--border);
+            gap: 2px;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .channel.voice { border-color: var(--orange); }
+        .channel.play { border-color: var(--teal); }
+        .channel.master { border-color: var(--orange); }
+        .ch-name {
+            font-size: 8px;
+            font-weight: 900;
+            letter-spacing: .5px;
+            margin-bottom: 1px;
+        }
+        .voice .ch-name { color: var(--orange); }
+        .play .ch-name { color: var(--teal); }
+        .master .ch-name { color: var(--orange); }
+
+        /* ===== KNOB ===== */
+        .knob-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .knob-wrap label {
+            font-size: 6px;
+            color: var(--text2);
+            margin-top: 1px;
+        }
+        .knob {
+            -webkit-appearance: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #1A1A3A;
+            border: 2px solid #333;
+            cursor: pointer;
+            outline: none;
+            touch-action: none;
+        }
+        .knob::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 0;
+            height: 0;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-row {
+            display: flex;
+            gap: 2px;
+            width: 100%;
+        }
+        .btn-row button {
+            flex: 1;
+            padding: 2px 1px;
+            border-radius: 3px;
+            border: 1px solid #333;
+            background: var(--surface2);
+            color: var(--text2);
+            font-size: 7px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.1s;
+            text-align: center;
+            min-height: 18px;
+        }
+        .btn-row button:active { transform: scale(0.94); }
+        .btn-row .active {
+            background: rgba(255,109,0,0.2);
+            color: var(--orange);
+            border-color: var(--orange);
+        }
+        .btn-row .solo-active {
+            background: rgba(118,255,3,0.15);
+            color: var(--green);
+            border-color: var(--green);
+        }
+        .btn-row .mute-active {
+            background: rgba(255,23,68,0.2);
+            color: var(--warning);
+            border-color: var(--warning);
+        }
+
+        /* ===== VU METER ===== */
+        .vu {
+            width: 80%;
+            height: 14px;
+            background: #000;
+            border-radius: 2px;
+            overflow: hidden;
+            border: 1px solid #1A1A3A;
+            position: relative;
+        }
+        .vu .fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(to top, var(--green) 60%, #FFD600 80%, var(--warning) 100%);
+            transition: height .06s;
+        }
+
+        /* ===== FADER ===== */
+        .fader-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-height: 30px;
+            width: 100%;
+        }
+        .fader-wrap label {
+            font-size: 6px;
+            color: var(--text2);
+            margin-top: 2px;
+        }
+        .fader {
+            -webkit-appearance: slider-vertical;
+            width: 14px;
+            flex: 1;
+            min-height: 40px;
+            background: #1A1A3A;
+            outline: none;
+            border-radius: 3px;
+            touch-action: none;
+        }
+        .fader::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 12px;
+            background: #555;
+            border-radius: 3px;
+            border: 1px solid #777;
+            cursor: pointer;
+        }
+
+        /* ===== NAV BAR ===== */
+        .nav-bar {
+            display: flex;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .nav-bar button {
+            flex: 1;
+            padding: 6px;
+            background: none;
+            border: none;
+            color: var(--text2);
+            font-size: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            border-top: 2px solid transparent;
+            transition: all 0.15s;
+        }
+        .nav-bar button.active {
+            color: var(--orange);
+            border-top-color: var(--orange);
+        }
+
+        /* ===== SPLASH ===== */
+        .splash {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: var(--bg);
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+        }
+        .splash-logo { font-size: 2.5em; font-weight: 900; color: var(--orange); }
+        .splash-sub { color: var(--text2); margin: 8px 0 20px; font-size: 14px; }
+        .splash-loader {
+            width: 36px;
+            height: 36px;
+            border: 3px solid #222;
+            border-top-color: var(--orange);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .splash button {
+            padding: 14px 44px;
+            background: var(--orange);
+            color: #FFF;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+        .splash button:hover { background: var(--orange-dim); }
+        .log { color: var(--text2); font-size: 11px; margin-top: 8px; text-align: center; }
+        .err { color: var(--warning); font-size: 11px; margin-top: 4px; text-align: center; }
+
+        /* ===== APP ===== */
+        .app {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .app.visible { display: flex; }
+
+        /* ===== DIALOG ===== */
+        .dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .dialog.visible { display: flex; }
+        .dlg {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border: 1px solid var(--border);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .dlg h3 { color: var(--orange); text-align: center; font-size: 16px; }
+        .dlg input, .dlg select {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            width: 100%;
+        }
+        .dlg button {
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .dlg .btn-save { background: var(--orange); color: #FFF; }
+        .dlg .btn-cancel { background: #333; color: var(--text2); }
+        .dlg .time-inputs {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .dlg .time-inputs input { width: 48px; text-align: center; }
+        .dlg .time-inputs span { color: var(--text2); font-weight: 700; }
+
+        /* ===== EFFECTS PANEL ===== */
+        .effects-panel {
+            display: none;
+            flex-direction: column;
+            background: var(--bg);
+            padding: 10px;
+            overflow-y: auto;
+            flex: 1;
+            gap: 8px;
+        }
+        .effects-panel.visible { display: flex; }
+        .effect-card {
+            background: var(--surface);
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid var(--border);
+        }
+        .effect-card .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .effect-card .header label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .effect-card .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0;
+        }
+        .effect-card .slider-row label {
+            font-size: 9px;
+            color: var(--text2);
+            min-width: 50px;
+        }
+        .effect-card .slider-row input[type="range"] {
+            flex: 1;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #222;
+            border-radius: 2px;
+            outline: none;
+        }
+        .effect-card .slider-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--teal);
+            cursor: pointer;
+        }
+        .effect-card .slider-row .value {
+            font-size: 9px;
+            color: var(--teal);
+            font-family: monospace;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        /* ===== AUTO-TUNE PANEL ===== */
+        .autotune-panel {
+            display: none;
+            flex-direction: column;
+            background: var(--bg);
+            padding: 10px;
+            overflow-y: auto;
+            flex: 1;
+            gap: 8px;
+        }
+        .autotune-panel.visible { display: flex; }
+        .piano-row {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .piano-key {
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid #333;
+            background: var(--surface2);
+            color: var(--text2);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.1s;
+            min-width: 30px;
+            text-align: center;
+        }
+        .piano-key.active {
+            background: var(--orange);
+            color: #FFF;
+            border-color: var(--orange);
+        }
+        .piano-key.sharp { background: #1A1A3A; border-color: #444; }
+        .piano-key.sharp.active { background: var(--orange-dim); border-color: var(--orange-dim); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 420px) {
+            .channel { padding: 2px; }
+            .knob { width: 22px; height: 22px; }
+            .fader { width: 10px; min-height: 30px; }
+            .player .ctrls button { width: 24px; height: 24px; font-size: 10px; }
+            .player .play-btn { width: 30px; height: 30px; font-size: 14px !important; }
+        }
+        @media (min-width: 768px) {
+            .channel { padding: 8px; }
+            .knob { width: 40px; height: 40px; }
+            .fader { width: 20px; min-height: 80px; }
+        }
+
+        /* ===== TOGGLE SWITCH ===== */
+        .toggle-switch {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .toggle-switch.active { background: var(--orange); }
+        .toggle-switch .thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: #FFF;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .toggle-switch.active .thumb { left: 18px; }
+
+        /* ===== MARKERS LIST ===== */
+        .markers-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .marker-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: var(--bg);
+            border-radius: 6px;
+            margin: 4px 0;
+            cursor: pointer;
+        }
+        .marker-item:hover { background: var(--surface2); }
+        .marker-item .time { color: var(--teal); font-family: monospace; font-size: 10px; }
+        .marker-item .name { color: var(--text); font-size: 12px; flex: 1; margin: 0 8px; }
+        .marker-item .del { color: var(--warning); cursor: pointer; font-size: 14px; }
     </style>
 </head>
 <body>
 
-<div id="startOverlay">
-    <h1 style="color:var(--orange);font-weight:900;">🎤 DF STUDIO</h1>
-    <p style="color:var(--textSec);margin:10px 0">Estúdio Profissional</p>
-    <button class="start-btn" onclick="initAudio()">LIGAR MOTOR DE ÁUDIO</button>
-    <p style="color:var(--textSec);font-size:11px;margin-top:10px" id="startMsg"></p>
+<!-- ===== SPLASH ===== -->
+<div id="splash" class="splash">
+    <div class="splash-logo">🎤 DF STUDIO</div>
+    <div class="splash-sub">Estúdio Profissional - Web</div>
+    <div class="splash-loader" id="splashLoader"></div>
+    <div class="log" id="logMsg">A carregar motor de áudio...</div>
+    <div class="err" id="errorMsg"></div>
+    <button id="startBtn" style="display:none" onclick="initAudio()">🎙️ INICIAR</button>
 </div>
 
-<div class="devices-row">
-    <div class="device-btn" style="border-color:var(--orange)"><span style="color:var(--orange)">🎤</span> Microfone</div>
-    <div class="device-btn" style="border-color:var(--teal)"><span style="color:var(--teal)">🔊</span> Saída</div>
-</div>
-<div class="stats-bar">
-    <span id="st-sr">48.0k</span> | <span id="st-buf">128buf</span> | LAT <span id="st-lat">--ms</span> | DSP <span class="dsp" id="st-dsp">--%</span>
-</div>
-
-<div class="presets-row">
-    <div class="preset-btn" id="ps1"><span>FORRÓ</span><div class="progress-bar"></div></div>
-    <div class="preset-btn" id="ps2"><span>PISEIRO</span><div class="progress-bar"></div></div>
-    <div class="preset-btn" id="ps3"><span>SERTANEJO</span><div class="progress-bar"></div></div>
-    <div class="preset-btn reset" onclick="resetMixer()">RESET</div>
-</div>
-
-<div class="player-widget">
-    <div class="pw-header">
-        <div class="pw-title"><span style="color:var(--teal)">🎵</span> <span id="trackName">Nenhum ficheiro</span></div>
-        <div class="pw-badge" id="markerCount">0</div>
+<!-- ===== APP ===== -->
+<div id="app" class="app">
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="title">DF STUDIO BETA</div>
+        <div class="stats">
+            <span id="sampleRate">48k</span> |
+            <span id="bufferSize">128b</span> |
+            LAT <span id="latency">0ms</span>
+        </div>
+        <button class="tuner-btn" onclick="openTuner()">🎸 AFINADOR</button>
     </div>
-    <div class="pw-seek-row">
-        <span id="timeCur" class="mono">00:00</span>
-        <div class="seek-container">
-            <div class="seek-track" id="seekTrack">
-                <div class="seek-fill" id="seekFill"></div>
-                <div id="markersContainer"></div>
+
+    <!-- PLAYER -->
+    <div class="player">
+        <div class="info">
+            <div class="name" id="trackName">🎵 Nenhuma música carregada</div>
+            <div class="badge" id="markerCount">0 marc</div>
+        </div>
+        <div class="seek">
+            <input type="range" id="seekBar" min="0" max="1000" value="0">
+        </div>
+        <div class="time">
+            <span id="currentTime">00:00</span>
+            <span id="durationTime">00:00</span>
+        </div>
+        <div class="ctrls">
+            <button onclick="prevTrack()">⏮</button>
+            <button onclick="prevMarker()" class="marker-btn">⏪</button>
+            <button id="playBtn" onclick="togglePlay()" class="play-btn">▶️</button>
+            <button onclick="nextMarker()" class="marker-btn">⏩</button>
+            <button onclick="nextTrack()">⏭</button>
+            <button onclick="showMarkerDialog()" class="marker-btn">📍</button>
+            <button onclick="document.getElementById('fileInput').click()">📁</button>
+            <input type="file" id="fileInput" accept="audio/*" style="display:none" onchange="handleFileUpload(event)">
+            <button onclick="stopTrack()">⏹</button>
+        </div>
+    </div>
+
+    <!-- MIXER -->
+    <div class="mixer" id="mixerContainer">
+        <!-- Canal VOZ -->
+        <div class="channel voice" id="channelVoice">
+            <div class="ch-name">🎤 VOZ</div>
+            <div class="knob-wrap">
+                <label>GANHO</label>
+                <input type="range" id="micGain" class="knob" min="0" max="100" value="65">
             </div>
-            <input type="range" class="seek-input" id="seekInput" min="0" max="1000" value="0">
+            <div class="btn-row">
+                <button id="fxBtn" class="active" onclick="toggleFx()">FX</button>
+                <button id="atBtn" onclick="toggleAutotune()">AT</button>
+            </div>
+            <div class="btn-row">
+                <button onclick="setPan('voice',-1)">L</button>
+                <button class="active" onclick="setPan('voice',0)">C</button>
+                <button onclick="setPan('voice',1)">R</button>
+            </div>
+            <div class="btn-row">
+                <button id="voiceSolo" onclick="toggleSolo('voice')">S</button>
+                <button id="voiceMute" onclick="toggleMute('voice')">M</button>
+            </div>
+            <div class="vu"><div class="fill" id="voiceVuFill"></div></div>
+            <div class="fader-wrap">
+                <input type="range" id="voiceFader" class="fader" min="0" max="100" value="50" orient="vertical">
+                <label>FADER</label>
+            </div>
         </div>
-        <span id="timeTot" class="mono">00:00</span>
-    </div>
-    <div class="pw-controls">
-        <button class="pw-btn orange" onclick="navMarker(-1)">⏪</button>
-        <button class="pw-btn play" id="btnPlay" onclick="togglePlay()">▶️</button>
-        <button class="pw-btn orange" onclick="navMarker(1)">⏩</button>
-        <button class="pw-btn orange" onclick="openAddMarker()">📍</button>
-        <button class="pw-btn orange" onclick="openListMarkers()">📄</button>
-        <button class="pw-btn" onclick="stopTrack()">⏹</button>
-        <input type="file" id="fileIn" accept="audio/*" style="display:none" onchange="loadFile(event)">
-        <button class="pw-btn" onclick="document.getElementById('fileIn').click()">📁</button>
-    </div>
-</div>
 
-<div class="strips-container">
-    <!-- VOZ -->
-    <div class="strip">
-        <div class="strip-top" style="background:var(--orange)"></div>
-        <div class="strip-header" style="color:var(--orange)">🎤 VOZ</div>
-        <div class="param-row"><span>GANHO</span><span class="param-val" style="color:var(--orange)" id="val-gain1">0 dB</span></div>
-        <div class="knob-container" onpointerdown="startKnob(event, 'gain1')" style="color:var(--orange)">
-            <div class="knob-bg"></div><canvas class="knob-arc"></canvas>
-            <div class="knob-dial" id="dial-gain1"><div class="knob-dot"></div></div>
+        <!-- Canal PLAY -->
+        <div class="channel play" id="channelPlay">
+            <div class="ch-name">🎵 PLAY</div>
+            <div class="knob-wrap">
+                <label>GANHO</label>
+                <input type="range" id="playGain" class="knob" min="0" max="100" value="40">
+            </div>
+            <div class="btn-row">
+                <button id="playMonoBtn" onclick="togglePlayMono()">MONO</button>
+            </div>
+            <div class="btn-row">
+                <button onclick="setPan('play',-1)">L</button>
+                <button class="active" onclick="setPan('play',0)">C</button>
+                <button onclick="setPan('play',1)">R</button>
+            </div>
+            <div class="btn-row">
+                <button id="playSolo" onclick="toggleSolo('play')">S</button>
+                <button id="playMute" onclick="toggleMute('play')">M</button>
+            </div>
+            <div class="vu"><div class="fill" id="playVuFill"></div></div>
+            <div class="fader-wrap">
+                <input type="range" id="playFader" class="fader" min="0" max="100" value="50" orient="vertical">
+                <label>FADER</label>
+            </div>
         </div>
-        <div class="btn-row" style="margin-top:6px">
-            <div class="sm-btn active" id="btn-fx" onclick="toggleBtn(this)" style="color:var(--orange)">FX</div>
-            <div class="sm-btn" id="btn-at" onclick="toggleBtn(this)" style="color:var(--orange)">AT</div>
+
+        <!-- Canal MASTER -->
+        <div class="channel master" id="channelMaster">
+            <div class="ch-name">🔊 MASTER</div>
+            <div class="knob-wrap">
+                <label>MONITOR</label>
+                <input type="range" id="monGain" class="knob" min="0" max="100" value="50">
+            </div>
+            <div class="btn-row">
+                <button id="monitorBtn" onclick="toggleMonitor()">MON SW</button>
+            </div>
+            <div class="btn-row">
+                <button onclick="setPan('master',-1)">L</button>
+                <button class="active" onclick="setPan('master',0)">C</button>
+                <button onclick="setPan('master',1)">R</button>
+            </div>
+            <div class="btn-row">
+                <button style="visibility:hidden">S</button>
+                <button id="masterMute" onclick="toggleMute('master')">M</button>
+            </div>
+            <div class="vu"><div class="fill" id="masterVuFill"></div></div>
+            <div class="fader-wrap">
+                <input type="range" id="masterFader" class="fader" min="0" max="100" value="50" orient="vertical">
+                <label>FADER</label>
+            </div>
         </div>
-        <div class="btn-row" style="color:var(--orange)">
-            <div class="sm-btn" onclick="setPan(1,-1)">L</div>
-            <div class="sm-btn active" onclick="setPan(1,0)">C</div>
-            <div class="sm-btn" onclick="setPan(1,1)">R</div>
+    </div>
+
+    <!-- NAV BAR -->
+    <div class="nav-bar">
+        <button class="active" data-tab="mixer" onclick="switchTab('mixer')">🎛️ MIXER</button>
+        <button data-tab="effects" onclick="switchTab('effects')">🎚️ EFEITOS</button>
+        <button data-tab="autotune" onclick="switchTab('autotune')">🎤 ROBOT</button>
+        <button data-tab="library" onclick="switchTab('library')">📚 BIB</button>
+        <button data-tab="settings" onclick="switchTab('settings')">⚙️ AJUSTES</button>
+    </div>
+
+    <!-- EFFECTS PANEL -->
+    <div id="effectsPanel" class="effects-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-weight:900;color:var(--orange);font-size:16px;">🎚️ EFEITOS</span>
+            <div class="toggle-switch active" id="fxMasterToggle" onclick="toggleFxMaster()">
+                <div class="thumb"></div>
+            </div>
         </div>
-        <div class="btn-row">
-            <div class="sm-btn solo" id="solo1" onclick="toggleBtn(this, 'solo')">S</div>
-            <div class="sm-btn mute active" id="mute1" onclick="toggleBtn(this, 'mute', updateVols)">M</div>
-        </div>
-        <div class="fader-area">
-            <div class="vu-container"><canvas class="vu-canvas" id="vu-mic"></canvas></div>
-            <div class="fader-wrapper">
-                <div class="fader-val mono" style="color:var(--orange)" id="val-fad1">0 dB</div>
-                <div class="fader-track-container" onpointerdown="startFader(event, 'fad1')">
-                    <div class="fader-track"><div class="fader-fill" id="fill-fad1" style="color:var(--orange)"></div></div>
-                    <div class="fader-thumb" id="thumb-fad1" style="color:var(--orange)"><div class="fader-thumb-line"></div></div>
+
+        <!-- REVERB -->
+        <div class="effect-card">
+            <div class="header">
+                <label>🏛️ REVERB</label>
+                <div class="toggle-switch" id="revToggle" onclick="toggleEffect('reverb')">
+                    <div class="thumb"></div>
                 </div>
             </div>
+            <div class="slider-row">
+                <label>MIX</label>
+                <input type="range" id="revMix" min="0" max="100" value="25">
+                <span class="value" id="revMixVal">25%</span>
+            </div>
         </div>
-    </div>
 
-    <!-- PLAY -->
-    <div class="strip">
-        <div class="strip-top" style="background:var(--teal)"></div>
-        <div class="strip-header" style="color:var(--teal)">🎵 PLAY</div>
-        <div class="param-row"><span>GANHO</span><span class="param-val" style="color:var(--teal)" id="val-gain2">-3 dB</span></div>
-        <div class="knob-container" onpointerdown="startKnob(event, 'gain2')" style="color:var(--teal)">
-            <div class="knob-bg"></div><canvas class="knob-arc"></canvas>
-            <div class="knob-dial" id="dial-gain2"><div class="knob-dot"></div></div>
-        </div>
-        <div class="btn-row" style="margin-top:6px"><div class="sm-btn teal" id="btn-mono" onclick="toggleBtn(this)">MONO</div></div>
-        <div class="btn-row" style="color:var(--teal)">
-            <div class="sm-btn" onclick="setPan(2,-1)">L</div>
-            <div class="sm-btn active" onclick="setPan(2,0)">C</div>
-            <div class="sm-btn" onclick="setPan(2,1)">R</div>
-        </div>
-        <div class="btn-row">
-            <div class="sm-btn solo" id="solo2" onclick="toggleBtn(this, 'solo')">S</div>
-            <div class="sm-btn mute active" id="mute2" onclick="toggleBtn(this, 'mute', updateVols)">M</div>
-        </div>
-        <div class="fader-area">
-            <div class="vu-container"><canvas class="vu-canvas" id="vu-play"></canvas></div>
-            <div class="fader-wrapper">
-                <div class="fader-val mono" style="color:var(--teal)" id="val-fad2">0 dB</div>
-                <div class="fader-track-container" onpointerdown="startFader(event, 'fad2')">
-                    <div class="fader-track"><div class="fader-fill" id="fill-fad2" style="color:var(--teal)"></div></div>
-                    <div class="fader-thumb" id="thumb-fad2" style="color:var(--teal)"><div class="fader-thumb-line"></div></div>
+        <!-- DELAY -->
+        <div class="effect-card">
+            <div class="header">
+                <label>⏳ DELAY</label>
+                <div class="toggle-switch" id="delayToggle" onclick="toggleEffect('delay')">
+                    <div class="thumb"></div>
                 </div>
+            </div>
+            <div class="slider-row">
+                <label>MIX</label>
+                <input type="range" id="delayMix" min="0" max="100" value="20">
+                <span class="value" id="delayMixVal">20%</span>
+            </div>
+            <div class="slider-row">
+                <label>TIME</label>
+                <input type="range" id="delayTime" min="50" max="800" value="250">
+                <span class="value" id="delayTimeVal">250ms</span>
+            </div>
+            <div class="slider-row">
+                <label>FB</label>
+                <input type="range" id="delayFb" min="0" max="90" value="40">
+                <span class="value" id="delayFbVal">40%</span>
+            </div>
+        </div>
+
+        <!-- CHORUS -->
+        <div class="effect-card">
+            <div class="header">
+                <label>🌊 CHORUS</label>
+                <div class="toggle-switch" id="chorusToggle" onclick="toggleEffect('chorus')">
+                    <div class="thumb"></div>
+                </div>
+            </div>
+            <div class="slider-row">
+                <label>MIX</label>
+                <input type="range" id="chorusMix" min="0" max="100" value="30">
+                <span class="value" id="chorusMixVal">30%</span>
+            </div>
+            <div class="slider-row">
+                <label>RATE</label>
+                <input type="range" id="chorusRate" min="0" max="100" value="50">
+                <span class="value" id="chorusRateVal">50%</span>
+            </div>
+        </div>
+
+        <!-- EQ -->
+        <div class="effect-card">
+            <div class="header">
+                <label>🎛️ EQ</label>
+                <div class="toggle-switch" id="eqToggle" onclick="toggleEffect('eq')">
+                    <div class="thumb"></div>
+                </div>
+            </div>
+            <div class="slider-row">
+                <label>GRAVES</label>
+                <input type="range" id="eqLow" min="-12" max="12" value="0">
+                <span class="value" id="eqLowVal">0dB</span>
+            </div>
+            <div class="slider-row">
+                <label>MÉDIOS</label>
+                <input type="range" id="eqMid" min="-12" max="12" value="0">
+                <span class="value" id="eqMidVal">0dB</span>
+            </div>
+            <div class="slider-row">
+                <label>AGUDOS</label>
+                <input type="range" id="eqHigh" min="-12" max="12" value="0">
+                <span class="value" id="eqHighVal">0dB</span>
+            </div>
+        </div>
+
+        <!-- COMPRESSOR -->
+        <div class="effect-card">
+            <div class="header">
+                <label>📊 COMPRESSOR</label>
+                <div class="toggle-switch" id="compToggle" onclick="toggleEffect('comp')">
+                    <div class="thumb"></div>
+                </div>
+            </div>
+            <div class="slider-row">
+                <label>RATIO</label>
+                <input type="range" id="compRatio" min="1" max="20" value="4">
+                <span class="value" id="compRatioVal">4:1</span>
+            </div>
+            <div class="slider-row">
+                <label>THRESHOLD</label>
+                <input type="range" id="compThresh" min="-60" max="0" value="-20">
+                <span class="value" id="compThreshVal">-20dB</span>
+            </div>
+        </div>
+
+        <!-- GATE -->
+        <div class="effect-card">
+            <div class="header">
+                <label>🚪 NOISE GATE</label>
+                <div class="toggle-switch" id="gateToggle" onclick="toggleEffect('gate')">
+                    <div class="thumb"></div>
+                </div>
+            </div>
+            <div class="slider-row">
+                <label>THRESHOLD</label>
+                <input type="range" id="gateThresh" min="-60" max="-10" value="-45">
+                <span class="value" id="gateThreshVal">-45dB</span>
             </div>
         </div>
     </div>
 
-    <!-- MASTER -->
-    <div class="strip master">
-        <div class="strip-top" style="background:var(--orange)"></div>
-        <div class="strip-header" style="color:var(--orange)">🔊 MASTER</div>
-        <div style="width:100%;padding:2px 5px;margin-top:2px;">
-            <div class="param-row" style="padding:0"><span>MON SW</span><span class="param-val" style="color:var(--orange)" id="txt-monsw">ON</span></div>
-            <div class="sm-btn active" id="btn-monsw" onclick="toggleMonSw()" style="height:18px;margin-top:2px;">RETORNO APP</div>
-        </div>
-        <div class="param-row"><span>MONITOR</span><span class="param-val" style="color:var(--orange)" id="val-gain3">0 dB</span></div>
-        <div class="knob-container" onpointerdown="startKnob(event, 'gain3')" style="color:var(--orange)">
-            <div class="knob-bg"></div><canvas class="knob-arc"></canvas>
-            <div class="knob-dial" id="dial-gain3"><div class="knob-dot"></div></div>
-        </div>
-        <div class="btn-row" style="color:var(--orange);margin-top:6px;">
-            <div class="sm-btn" onclick="setPan(3,-1)">L</div>
-            <div class="sm-btn active" onclick="setPan(3,0)">C</div>
-            <div class="sm-btn" onclick="setPan(3,1)">R</div>
-        </div>
-        <div class="btn-row">
-            <div class="sm-btn" style="visibility:hidden">S</div>
-            <div class="sm-btn mute" id="mute3" onclick="toggleBtn(this, 'mute', updateVols)">M</div>
-        </div>
-        <div class="fader-area">
-            <div class="vu-container"><canvas class="vu-canvas" id="vu-masterL"></canvas></div>
-            <div class="fader-wrapper">
-                <div class="fader-val mono" style="color:var(--orange)" id="val-fad3">0 dB</div>
-                <div class="fader-track-container" onpointerdown="startFader(event, 'fad3')">
-                    <div class="fader-track"><div class="fader-fill" id="fill-fad3" style="color:var(--orange)"></div></div>
-                    <div class="fader-thumb" id="thumb-fad3" style="color:var(--orange);width:38px"><div class="fader-thumb-line"></div></div>
-                </div>
+    <!-- AUTO-TUNE PANEL -->
+    <div id="autotunePanel" class="autotune-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-weight:900;color:var(--orange);font-size:16px;">🎤 AUTO-TUNE</span>
+            <div class="toggle-switch" id="atMasterToggle" onclick="toggleAutotuneMaster()">
+                <div class="thumb"></div>
             </div>
-            <div class="vu-container"><canvas class="vu-canvas" id="vu-masterR"></canvas></div>
-            <div class="scale"><span>+12</span><span>+6</span><span>0</span><span>-12</span><span>-30</span><span>-∞</span></div>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:10px;color:var(--text2);">TOM:</span>
+            <div class="piano-row" id="pianoKeys"></div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="piano-key" data-mode="MAIOR" onclick="setAtMode('MAIOR')">MAIOR</button>
+            <button class="piano-key" data-mode="MENOR" onclick="setAtMode('MENOR')">MENOR</button>
+            <button class="piano-key" data-mode="CROM" onclick="setAtMode('CROM')">CROMÁTICO</button>
+        </div>
+
+        <div class="slider-row">
+            <label>VELOCIDADE</label>
+            <input type="range" id="atSpeed" min="1" max="40" value="14">
+            <span class="value" id="atSpeedVal">14ms</span>
+        </div>
+        <div class="slider-row">
+            <label>QUANTIDADE</label>
+            <input type="range" id="atAmount" min="0" max="100" value="65">
+            <span class="value" id="atAmountVal">65%</span>
+        </div>
+        <div class="slider-row">
+            <label>FORMANTE</label>
+            <input type="range" id="atFormant" min="-6" max="6" value="0" step="0.5">
+            <span class="value" id="atFormantVal">0</span>
+        </div>
+        <div class="slider-row">
+            <label>DETUNE</label>
+            <input type="range" id="atDetune" min="-25" max="25" value="0">
+            <span class="value" id="atDetuneVal">0c</span>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+            <span style="font-size:10px;color:var(--text2);">AUTO KEY:</span>
+            <div class="toggle-switch active" id="autoKeyToggle" onclick="toggleAutoKey()">
+                <div class="thumb"></div>
+            </div>
+            <span style="font-size:10px;color:var(--teal);" id="detectedKey">--</span>
+            <span style="font-size:9px;color:var(--text2);" id="detectedPitch">0 Hz</span>
+        </div>
+
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">
+            <button class="piano-key" onclick="applyPreset('FORRO')">FORRÓ</button>
+            <button class="piano-key" onclick="applyPreset('PISEIRO')">PISEIRO</button>
+            <button class="piano-key" onclick="applyPreset('SERTANEJO')">SERTANEJO</button>
+            <button class="piano-key" onclick="resetAutotune()">RESET</button>
+        </div>
+    </div>
+
+    <!-- LIBRARY PANEL -->
+    <div id="libraryPanel" style="display:none;flex-direction:column;background:var(--bg);padding:10px;overflow-y:auto;flex:1;gap:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:900;color:var(--teal);font-size:16px;">📚 BIBLIOTECA</span>
+            <button onclick="document.getElementById('fileInput').click()" style="padding:6px 14px;background:var(--orange);border:none;border-radius:6px;color:#FFF;font-weight:700;cursor:pointer;font-size:11px;">📤 IMPORTAR</button>
+        </div>
+        <div id="libraryList"></div>
+    </div>
+
+    <!-- SETTINGS PANEL -->
+    <div id="settingsPanel" style="display:none;flex-direction:column;background:var(--bg);padding:10px;overflow-y:auto;flex:1;gap:8px;">
+        <span style="font-weight:900;color:var(--orange);font-size:16px;">⚙️ AJUSTES</span>
+        <div class="effect-card">
+            <div class="header">
+                <label>🔊 Buffer Size</label>
+                <span id="bufferInfo" style="font-size:10px;color:var(--teal);">128 samples</span>
+            </div>
+            <input type="range" id="bufferSizeSlider" min="64" max="1024" value="128" step="64">
+        </div>
+        <button onclick="exportBackup()" style="padding:10px;background:var(--teal);border:none;border-radius:6px;color:#FFF;font-weight:700;cursor:pointer;">💾 Exportar Backup</button>
+        <button onclick="document.getElementById('importBackupInput').click()" style="padding:10px;background:var(--orange);border:none;border-radius:6px;color:#FFF;font-weight:700;cursor:pointer;">📂 Importar Backup</button>
+        <input type="file" id="importBackupInput" accept=".json" style="display:none" onchange="importBackup(event)">
+        <div style="color:var(--text2);font-size:10px;margin-top:8px;text-align:center;">
+            DF Studio Pro Web v1.0<br>
+            Baseado no app Android<br>
+            Instagram: @eududufidelis
         </div>
     </div>
 </div>
 
-<div class="overlay" id="dlgMarker">
-    <div class="dialog">
-        <div class="dlg-title">📍 NOVO MARCADOR</div>
-        <input type="text" id="inMarkerName" placeholder="Nome do marcador">
-        <button class="btn-primary" onclick="saveMarker()">💾 GUARDAR</button>
-        <button class="btn-sec" onclick="document.getElementById('dlgMarker').style.display='none'">CANCELAR</button>
+<!-- MARKER DIALOG -->
+<div class="dialog" id="markerDialog">
+    <div class="dlg">
+        <h3>📍 NOVO MARCADOR</h3>
+        <input type="text" id="markerName" placeholder="Nome do marcador (ex: Refrão)">
+        <label style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="useCurrentTime" checked onchange="toggleManualTime()">
+            Usar tempo atual
+        </label>
+        <div id="manualTime" style="display:none" class="time-inputs">
+            <input type="number" id="markerMin" placeholder="MIN" min="0" max="99">
+            <span>:</span>
+            <input type="number" id="markerSec" placeholder="SEG" min="0" max="59">
+            <span>.</span>
+            <input type="number" id="markerMs" placeholder="MS" min="0" max="999">
+        </div>
+        <button class="btn-save" onclick="saveMarker()">💾 SALVAR</button>
+        <button class="btn-cancel" onclick="closeMarkerDialog()">CANCELAR</button>
     </div>
 </div>
 
-<div class="overlay" id="dlgList">
-    <div class="dialog" style="max-height:80vh;display:flex;flex-direction:column;">
-        <div class="dlg-title" style="color:var(--orange)">📄 MARCADORES</div>
-        <div style="overflow-y:auto;flex:1;margin:10px 0;" id="markerListDiv"><p style="color:var(--textSec);text-align:center">Nenhum marcador</p></div>
-        <button class="btn-sec" onclick="document.getElementById('dlgList').style.display='none'">FECHAR</button>
+<!-- MARKERS LIST DIALOG -->
+<div class="dialog" id="markersListDialog">
+    <div class="dlg">
+        <h3>📋 MARCADORES</h3>
+        <div id="markersListContainer" class="markers-list"></div>
+        <button class="btn-cancel" onclick="closeMarkersList()">FECHAR</button>
     </div>
 </div>
 
-<script>
-let ctx, gainMic, gainPlay, gainMaster, panMic, panPlay, anaMic, anaPlay, anaML, anaMR;
-let audioBuf, srcNode, isPlaying = false, startT = 0, pauseT = 0;
-let markers = [];
-let state = { gain1:0.65, gain2:0.40, gain3:0.50, fad1:0.50, fad2:0.50, fad3:0.50, monSw:true };
-let vuData = new Uint8Array(128);
-let peaks = {mic:-60, play:-60, mL:-60, mR:-60}, peakTimers = {mic:0, play:0, mL:0, mR:0};
-let activeDrag = null;
+<!-- TUNER DIALOG -->
+<div class="dialog" id="tunerDialog">
+    <div class="dlg" style="text-align:center;">
+        <h3>🎸 AFINADOR</h3>
+        <div style="font-size:48px;font-weight:900;color:var(--teal);" id="tunerNote">--</div>
+        <div style="font-size:20px;color:var(--text2);" id="tunerFreq">0 Hz</div>
+        <div style="height:20px;width:100%;background:#222;border-radius:10px;overflow:hidden;margin:10px 0;">
+            <div id="tunerMeter" style="height:100%;width:50%;background:var(--green);transition:width 0.1s;"></div>
+        </div>
+        <div id="tunerStatus" style="font-size:12px;color:var(--text2);">Toque uma nota</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
+            <button class="piano-key" onclick="selectTunerString(0)">E2</button>
+            <button class="piano-key" onclick="selectTunerString(1)">A2</button>
+            <button class="piano-key" onclick="selectTunerString(2)">D3</button>
+            <button class="piano-key" onclick="selectTunerString(3)">G3</button>
+            <button class="piano-key" onclick="selectTunerString(4)">B3</button>
+            <button class="piano-key" onclick="selectTunerString(5)">E4</button>
+        </div>
+        <button class="btn-cancel" onclick="closeTuner()" style="margin-top:10px;">FECHAR</button>
+    </div>
+</div>
 
-function sliderToDb(v) { if(v<=0.001) return -60; if(v<=0.5) return -60+(v/0.5)*60; return ((v-0.5)/0.5)*10; }
-function formatDb(v) { let db=sliderToDb(v); if(db<=-59.9) return "-∞"; if(Math.abs(db)<0.1) return "0 dB"; return (db>0?"+":"")+Math.round(db)+" dB"; }
-function sliderToLinear(v) { let db=sliderToDb(v); if(db<=-59.9) return 0; return Math.pow(10,db/20); }
-function fmtT(s) { let m=Math.floor(s/60), sc=Math.floor(s%60); return m.toString().padStart(2,'0')+':'+sc.toString().padStart(2,'0'); }
-
-async function initAudio() {
-    document.getElementById('startOverlay').style.display = 'none';
-    ctx = new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});
-    gainMic=ctx.createGain(); panMic=ctx.createStereoPanner(); anaMic=ctx.createAnalyser(); anaMic.fftSize=256;
-    gainPlay=ctx.createGain(); panPlay=ctx.createStereoPanner(); anaPlay=ctx.createAnalyser(); anaPlay.fftSize=256;
-    gainMaster=ctx.createGain(); anaML=ctx.createAnalyser(); anaMR=ctx.createAnalyser();
-    gainMic.connect(panMic); panMic.connect(anaMic); anaMic.connect(gainMaster);
-    gainPlay.connect(panPlay); panPlay.connect(anaPlay); anaPlay.connect(gainMaster);
-    gainMaster.connect(anaML); gainMaster.connect(anaMR); gainMaster.connect(ctx.destination);
-    try { let stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,autoGainControl:false,noiseSuppression:false}}); ctx.createMediaStreamSource(stream).connect(gainMic); } catch(e) {}
-    document.getElementById('st-sr').textContent=(ctx.sampleRate/1000).toFixed(1)+'k';
-    document.getElementById('mute1').classList.remove('active'); updateVols();
-    requestAnimationFrame(drawVUs);
-}
-
-function updateVols() {
-    if(!ctx) return;
-    let m1=document.getElementById('mute1').classList.contains('active');
-    let m2=document.getElementById('mute2').classList.contains('active');
-    let m3=document.getElementById('mute3').classList.contains('active');
-    gainMic.gain.value=m1?0:sliderToLinear(state.fad1)*sliderToLinear(state.gain1);
-    gainPlay.gain.value=m2?0:sliderToLinear(state.fad2)*sliderToLinear(state.gain2);
-    gainMaster.gain.value=m3?0:sliderToLinear(state.fad3);
-}
-
-function toggleMonSw() {
-    state.monSw=!state.monSw;
-    document.getElementById('txt-monsw').textContent=state.monSw?'ON':'OFF';
-    let b=document.getElementById('btn-monsw');
-    b.textContent=state.monSw?'RETORNO APP':'DIRECT MON';
-    if(state.monSw) b.classList.add('active'); else b.classList.remove('active');
-}
-
-function drawKnob(id, val) {
-    let el=document.getElementById('dial-'+id);
-    el.style.transform='rotate('+((val*270)-135)+'deg)';
-    let lbl=document.getElementById('val-'+id);
-    if(lbl) lbl.textContent=formatDb(val);
-    let cvs=el.previousElementSibling;
-    if(!cvs.ctx){cvs.width=cvs.clientWidth*2;cvs.height=cvs.clientHeight*2;cvs.ctx=cvs.getContext('2d');}
-    let ctx2=cvs.ctx;ctx2.clearRect(0,0,cvs.width,cvs.height);
-    ctx2.beginPath();ctx2.arc(cvs.width/2,cvs.height/2,cvs.width/2-4,0.75*Math.PI,0.75*Math.PI+val*1.5*Math.PI);
-    ctx2.strokeStyle=getComputedStyle(el.parentElement).color;ctx2.lineWidth=5;ctx2.lineCap='round';ctx2.stroke();
-}
-
-function drawFader(id, val) {
-    document.getElementById('fill-'+id).style.height=(val*100)+'%';
-    document.getElementById('thumb-'+id).style.bottom=(val*100)+'%';
-    let lbl=document.getElementById('val-'+id);
-    if(lbl) lbl.textContent=formatDb(val);
-}
-
-['gain1','gain2','gain3'].forEach(id=>drawKnob(id,state[id]));
-['fad1','fad2','fad3'].forEach(id=>drawFader(id,state[id]));
-
-function startKnob(e, id) { activeDrag={id,type:'knob',startY:e.clientY,startVal:state[id]}; }
-function startFader(e, id) {
-    let track=document.getElementById('fill-'+id).parentElement;
-    let rect=track.getBoundingClientRect();
-    let val=1-((e.clientY-rect.top)/rect.height);
-    val=Math.max(0,Math.min(1,val));
-    state[id]=val;drawFader(id,val);updateVols();
-    activeDrag={id,type:'fader',track};
-}
-
-document.addEventListener('pointermove', e => {
-    if(!activeDrag) return;
-    if(activeDrag.type==='knob') {
-        let diff=(activeDrag.startY-e.clientY)/200;
-        let n=Math.max(0,Math.min(1,activeDrag.startVal+diff));
-        state[activeDrag.id]=n;drawKnob(activeDrag.id,n);updateVols();
-    } else if(activeDrag.type==='fader') {
-        let rect=activeDrag.track.getBoundingClientRect();
-        let val=1-((e.clientY-rect.top)/rect.height);
-        state[activeDrag.id]=Math.max(0,Math.min(1,val));
-        drawFader(activeDrag.id,state[activeDrag.id]);updateVols();
-    }
-});
-document.addEventListener('pointerup', ()=>activeDrag=null);
-
-function toggleBtn(el, type, cb) { el.classList.toggle('active'); if(cb) cb(); }
-function setPan(ch, v) {
-    let btns=document.querySelectorAll('.strip:nth-child('+ch+') .btn-row:nth-of-type(2) .sm-btn');
-    btns.forEach((b,i)=>{b.classList.remove('active');if((v===-1&&i===0)||(v===0&&i===1)||(v===1&&i===2))b.classList.add('active');});
-}
-function resetMixer() {
-    ['gain1','gain2','gain3','fad1','fad2','fad3'].forEach(id=>{state[id]=0.5;drawKnob(id,0.5);drawFader(id,0.5);});
-    updateVols();
-}
-
-function getDb(ana) {
-    if(!ana) return -60;
-    ana.getByteTimeDomainData(vuData);
-    let sum=0;for(let i=0;i<vuData.length;i++){let v=(vuData[i]-128)/128;sum+=v*v;}
-    let rms=Math.sqrt(sum/vuData.length);
-    if(rms<0.0001) return -60;
-    return Math.max(-60,20*Math.log10(rms)+12);
-}
-
-function renderVu(id, db, key) {
-    let cvs=document.getElementById(id);
-    if(!cvs.ctx){cvs.width=cvs.clientWidth*2;cvs.height=cvs.clientHeight*2;cvs.ctx=cvs.getContext('2d');}
-    let ctx2=cvs.ctx,w=cvs.width,h=cvs.height;
-    ctx2.clearRect(0,0,w,h);
-    if(db>=peaks[key]){peaks[key]=db;peakTimers[key]=0;}
-    else{peakTimers[key]++;if(peakTimers[key]>16)peaks[key]=Math.max(db,peaks[key]-1.4);}
-    let minDb=-60,maxDb=6,segs=34,gap=2,segH=(h-gap*(segs-1))/segs;
-    let active=Math.round(((db-minDb)/(maxDb-minDb))*segs);
-    for(let i=0;i<segs;i++){
-        let dbAt=minDb+(i/segs)*(maxDb-minDb),isLit=i<active;
-        let color=dbAt>=0?'#FF1744':(dbAt>=-6?'#FF6D00':(dbAt>=-18?'#FFD54F':'#00E676'));
-        ctx2.fillStyle=isLit?color:'rgba(255,255,255,0.1)';
-        ctx2.fillRect(2,h-(i+1)*segH-i*gap,w-4,segH);
-    }
-    [-18,-12,-6,0].forEach(d=>{let y=h-((d-minDb)/(maxDb-minDb))*h;ctx2.fillStyle='rgba(255,255,255,0.3)';ctx2.fillRect(0,y,w,1);});
-    if(peaks[key]>minDb){let py=h-((peaks[key]-minDb)/(maxDb-minDb))*h;ctx2.fillStyle=peaks[key]>=0?'#FF1744':'#FFF';ctx2.fillRect(0,py,w,2);}
-}
-
-function drawVUs() {
-    if(!ctx) return requestAnimationFrame(drawVUs);
-    document.getElementById('st-lat').textContent=Math.round(ctx.baseLatency*1000)+'ms';
-    renderVu('vu-mic',getDb(anaMic),'mic');
-    renderVu('vu-play',getDb(anaPlay),'play');
-    renderVu('vu-masterL',getDb(anaML),'mL');
-    renderVu('vu-masterR',getDb(anaMR),'mR');
-    if(isPlaying&&audioBuf){let t=ctx.currentTime-startT;if(t>=audioBuf.duration)stopTrack();else{document.getElementById('timeCur').textContent=fmtT(t);document.getElementById('seekFill').style.width=(t/audioBuf.duration*100)+'%';}}
-    requestAnimationFrame(drawVUs);
-}
-
-async function loadFile(e) {
-    let f=e.target.files[0];if(!f)return;
-    document.getElementById('trackName').textContent=f.name.replace(/\.[^/.]+$/,'');
-    let ab=await f.arrayBuffer();audioBuf=await ctx.decodeAudioData(ab);
-    document.getElementById('timeTot').textContent=fmtT(audioBuf.duration);
-    document.getElementById('mute2').classList.remove('active');updateVols();
-    stopTrack();loadMarkers();
-}
-
-function togglePlay() { if(!audioBuf)return; if(isPlaying){srcNode.stop();pauseT=ctx.currentTime-startT;isPlaying=false;document.getElementById('btnPlay').textContent='▶️';} else playFrom(pauseT); }
-function stopTrack() { if(srcNode)try{srcNode.stop()}catch(e){} isPlaying=false;pauseT=0;document.getElementById('btnPlay').textContent='▶️';document.getElementById('timeCur').textContent='00:00';document.getElementById('seekFill').style.width='0%'; }
-function playFrom(t) {
-    if(!audioBuf)return;
-    if(srcNode)try{srcNode.stop()}catch(e){}
-    srcNode=ctx.createBufferSource();srcNode.buffer=audioBuf;srcNode.connect(gainPlay);
-    srcNode.start(0,t);startT=ctx.currentTime-t;isPlaying=true;pauseT=t;
-    document.getElementById('btnPlay').textContent='⏸️';
-}
-
-document.getElementById('seekInput').addEventListener('input',e=>{
-    if(!audioBuf)return;let p=e.target.value/1000,t=p*audioBuf.duration;
-    document.getElementById('seekFill').style.width=(p*100)+'%';document.getElementById('timeCur').textContent=fmtT(t);
-    if(isPlaying)playFrom(t);else pauseT=t;
-});
-
-function loadMarkers() {
-    let saved=localStorage.getItem('df_marks_'+document.getElementById('trackName').textContent);
-    markers=saved?JSON.parse(saved):[];renderMarkers();
-}
-function saveMarker() {
-    let n=document.getElementById('inMarkerName').value;if(!n)return;
-    let t=isPlaying?(ctx.currentTime-startT):pauseT;
-    markers.push({name:n,t:t});markers.sort((a,b)=>a.t-b.t);
-    localStorage.setItem('df_marks_'+document.getElementById('trackName').textContent,JSON.stringify(markers));
-    document.getElementById('dlgMarker').style.display='none';renderMarkers();
-}
-function renderMarkers() {
-    document.getElementById('markerCount').textContent=markers.length;
-    let c=document.getElementById('markersContainer');c.innerHTML='';
-    let list=document.getElementById('markerListDiv');list.innerHTML='';
-    if(!audioBuf)return;
-    markers.forEach((m,i)=>{
-        let mk=document.createElement('div');mk.className='seek-marker';mk.style.left=(m.t/audioBuf.duration*100)+'%';c.appendChild(mk);
-        let div=document.createElement('div');div.className='marker-item';
-        div.innerHTML='<div class="marker-time">'+fmtT(m.t)+'</div><div class="marker-name">'+m.name+'</div><button class="pw-btn" style="color:var(--teal)" onclick="playFrom('+m.t+');document.getElementById(\'dlgList\').style.display=\'none\'">▶</button>';
-        list.appendChild(div);
-    });
-    if(!markers.length) list.innerHTML='<p style="color:var(--textSec);text-align:center">Nenhum marcador</p>';
-}
-function navMarker(dir) {
-    if(!markers.length||!audioBuf)return;
-    let cur=isPlaying?(ctx.currentTime-startT):pauseT;
-    let target=dir===-1?[...markers].reverse().find(m=>m.t<cur-1)||markers[markers.length-1]:markers.find(m=>m.t>cur+1)||markers[0];
-    if(target)playFrom(target.t);
-}
-function openAddMarker(){document.getElementById('inMarkerName').value='';document.getElementById('dlgMarker').style.display='flex';}
-function openListMarkers(){document.getElementById('dlgList').style.display='flex';}
-</script>
+<script src="app.js"></script>
 </body>
 </html>
