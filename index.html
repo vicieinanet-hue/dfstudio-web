@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#080812">
     <title>DF Studio Pro - Web</title>
+    <link rel="manifest" href="manifest.json">
     <style>
         :root {
             --bg: #080812; --surface: #12172A; --surfaceHigh: #1E293B; --surfaceVar: #0F172A;
@@ -13,628 +17,449 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, sans-serif; user-select: none; -webkit-user-select: none; }
         body { background: var(--bg); color: var(--text); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; max-width: 450px; margin: 0 auto; }
-        
         .mono { font-family: monospace; }
         .bold { font-weight: 800; }
-        
-        /* Topbar & Stats */
         .devices-row { display: flex; gap: 6px; padding: 6px; }
         .device-btn { flex: 1; background: var(--surface); border: 1px solid #333; border-radius: 7px; padding: 6px; display: flex; align-items: center; gap: 5px; color: var(--text); font-size: 10px; }
         .stats-bar { display: flex; justify-content: space-evenly; background: var(--surface); padding: 4px; font-size: 9px; color: var(--textSec); border-bottom: 1px solid var(--border); }
         .stats-bar span { color: var(--teal); font-weight: bold; }
         .stats-bar .dsp { color: var(--orange); }
-
-        /* Quick Presets */
         .presets-row { display: flex; gap: 4px; padding: 4px 6px; background: var(--surface); }
-        .preset-btn { flex: 1; height: 26px; border-radius: 4px; border: 1px solid rgba(255,109,0,0.5); background: rgba(255,109,0,0.12); color: var(--orange); font-size: 9px; font-weight: 900; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        .preset-btn { flex: 1; height: 26px; border-radius: 4px; border: 1px solid rgba(255,109,0,0.5); background: rgba(255,109,0,0.12); color: var(--orange); font-size: 9px; font-weight: 900; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; cursor: pointer; }
         .preset-btn.active { background: var(--orange); color: #000; }
         .preset-btn.reset { border-color: rgba(255,23,68,0.5); background: rgba(255,23,68,0.12); color: var(--warning); }
-        .progress-bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(255,255,255,0.3); width: 0%; pointer-events: none; }
-
-        /* Player Widget */
+        .progress-bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(255,255,255,0.3); width: 0%; pointer-events: none; transition: width 0.5s linear; }
         .player-widget { background: var(--surface); display: flex; flex-direction: column; border-bottom: 1px solid var(--border); }
         .pw-header { display: flex; justify-content: space-between; padding: 6px 10px; align-items: center; }
-        .pw-title { font-size: 12px; font-weight: 900; display: flex; gap: 6px; align-items: center; }
-        .pw-badge { background: rgba(255,109,0,0.15); color: var(--orange); border: 1px solid rgba(255,109,0,0.4); padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .pw-title { font-size: 12px; font-weight: 900; display: flex; gap: 6px; align-items: center; overflow: hidden; }
+        .pw-title span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pw-badge { background: rgba(255,109,0,0.15); color: var(--orange); border: 1px solid rgba(255,109,0,0.4); padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; white-space: nowrap; }
         .pw-seek-row { display: flex; align-items: center; gap: 6px; padding: 2px 10px; font-size: 9px; color: var(--textSec); }
-        
         .seek-container { flex: 1; position: relative; height: 16px; display: flex; align-items: center; }
         .seek-track { width: 100%; height: 6px; background: var(--surfaceHigh); border-radius: 3px; position: relative; overflow: hidden; }
-        .seek-fill { height: 100%; background: var(--teal); width: 0%; border-radius: 3px; }
-        .seek-marker { position: absolute; width: 2px; height: 8px; background: var(--orange); top: 4px; transform: translateX(-50%); }
-        .seek-input { position: absolute; width: 100%; height: 100%; opacity: 0; margin: 0; }
-
+        .seek-fill { height: 100%; background: var(--teal); width: 0%; border-radius: 3px; transition: width 0.1s; }
+        .seek-marker { position: absolute; width: 2px; height: 8px; background: var(--orange); top: 4px; transform: translateX(-50%); z-index: 2; }
+        .seek-input { position: absolute; width: 100%; height: 100%; opacity: 0; margin: 0; z-index: 3; }
         .pw-controls { display: flex; justify-content: space-evenly; align-items: center; padding: 6px 0; }
-        .pw-btn { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; background: none; border: none; color: var(--textSec); }
+        .pw-btn { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; background: none; border: none; color: var(--textSec); cursor: pointer; }
         .pw-btn.play { width: 38px; height: 38px; border: 2px solid rgba(0,188,212,0.5); background: rgba(0,188,212,0.15); color: var(--teal); }
         .pw-btn.orange { color: var(--orange); }
-
-        /* Mixer Channels */
-        .strips-container { flex: 1; display: flex; gap: 3px; padding: 3px; overflow-y: hidden; }
-        .strip { flex: 1; background: var(--surface); border: 1px solid var(--surfaceHigh); border-radius: 8px; display: flex; flex-direction: column; align-items: center; overflow: hidden; padding-bottom: 4px; }
+        .strips-container { flex: 1; display: flex; gap: 3px; padding: 3px; overflow-y: hidden; min-height: 0; }
+        .strip { flex: 1; background: var(--surface); border: 1px solid var(--surfaceHigh); border-radius: 8px; display: flex; flex-direction: column; align-items: center; overflow: hidden; padding-bottom: 4px; min-width: 0; }
         .strip.master { border-color: var(--orange); border-width: 2px; }
         .strip-top { width: 100%; height: 2px; }
         .strip-header { width: 100%; background: var(--surfaceHigh); padding: 4px; text-align: center; font-size: 9px; font-weight: 900; letter-spacing: 0.8px; display: flex; justify-content: center; align-items: center; gap: 4px; }
-        
-        /* Knobs & Params */
         .param-row { width: 100%; padding: 2px 5px; display: flex; justify-content: space-between; font-size: 7px; color: var(--textSec); font-weight: 900; }
         .param-val { font-family: monospace; }
-        
         .knob-container { width: 38px; height: 38px; position: relative; margin: 2px 0; touch-action: none; }
         .knob-bg { position: absolute; inset: 0; border-radius: 50%; background: var(--surfaceHigh); border: 2px solid rgba(0,0,0,0.3); }
-        .knob-arc { position: absolute; inset: 2px; border-radius: 50%; border: 3px solid transparent; }
+        .knob-arc { position: absolute; inset: 2px; border-radius: 50%; }
         .knob-dial { position: absolute; inset: 4px; border-radius: 50%; background: #222; display: flex; justify-content: center; transform: rotate(-135deg); }
         .knob-dot { width: 3px; height: 3px; background: currentColor; border-radius: 50%; margin-top: 3px; }
-
-        /* Buttons Row */
         .btn-row { display: flex; width: 100%; gap: 3px; padding: 0 5px; margin-bottom: 3px; }
         .sm-btn { flex: 1; height: 20px; border-radius: 4px; border: 1px solid var(--surfaceHigh); background: var(--surfaceHigh); color: var(--textSec); font-size: 8px; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .sm-btn.active { background: rgba(255,109,0,0.14); border-color: var(--orange); color: var(--orange); }
-        .sm-btn.teal { background: rgba(0,188,212,0.14); border-color: var(--teal); color: var(--teal); }
+        .sm-btn.teal { color: var(--teal); }
+        .sm-btn.teal.active { background: rgba(0,188,212,0.14); border-color: var(--teal); }
         .sm-btn.solo.active { background: #0A1800; border-color: #76FF03; color: #76FF03; }
         .sm-btn.mute.active { background: #1A0000; border-color: var(--warning); color: var(--warning); }
-        .sm-btn.pan.active { background: rgba(255,255,255,0.1); border-color: currentColor; color: currentColor; }
-
-        /* Fader Area */
         .fader-area { flex: 1; display: flex; width: 100%; padding: 4px; gap: 4px; align-items: flex-end; }
         .vu-container { width: 16px; height: 100%; background: rgba(0,0,0,0.45); border-radius: 2px; position: relative; }
         canvas.vu-canvas { width: 100%; height: 100%; display: block; }
-        
         .fader-wrapper { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; }
         .fader-val { font-size: 8px; font-weight: 900; margin-bottom: 2px; }
         .fader-track-container { flex: 1; width: 100%; position: relative; display: flex; justify-content: center; touch-action: none; }
         .fader-track { width: 4px; height: 100%; background: rgba(0,0,0,0.45); border-radius: 2px; position: relative; display: flex; align-items: flex-end; overflow: hidden; }
-        .fader-fill { width: 100%; background: currentColor; opacity: 0.65; }
-        .fader-thumb { position: absolute; width: 34px; height: 18px; background: linear-gradient(to bottom, #5A5A66, #303038, #585864); border: 1px solid rgba(255,255,255,0.18); border-radius: 4px; display: flex; justify-content: center; align-items: center; transform: translateY(-50%); pointer-events: none; }
+        .fader-fill { width: 100%; background: currentColor; opacity: 0.65; transition: height 0.05s; }
+        .fader-thumb { position: absolute; width: 34px; height: 18px; background: linear-gradient(to bottom, #5A5A66, #303038, #585864); border: 1px solid rgba(255,255,255,0.18); border-radius: 4px; display: flex; justify-content: center; align-items: center; transform: translateY(-50%); pointer-events: none; left: 50%; transform: translateX(-50%) translateY(-50%); }
         .fader-thumb-line { width: 62%; height: 2px; background: currentColor; }
-        
-        .scale { display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding-bottom: 9px; font-size: 6px; color: var(--textSec); font-family: monospace; }
-
-        /* Dialogs */
+        .scale { display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding-bottom: 9px; font-size: 6px; color: var(--textSec); font-family: monospace; padding-left: 2px; }
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 100; }
         .dialog { background: var(--surface); padding: 16px; border-radius: 12px; width: 90%; max-width: 340px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
         .dlg-title { color: #FFF; font-size: 18px; font-weight: 900; text-align: center; }
-        input[type="text"], input[type="number"] { width: 100%; background: var(--bg); border: 1px solid #333; color: #FFF; padding: 10px; border-radius: 6px; outline: none; }
+        input[type="text"], input[type="number"] { width: 100%; background: var(--bg); border: 1px solid #333; color: #FFF; padding: 10px; border-radius: 6px; outline: none; font-size: 14px; }
         input[type="text"]:focus { border-color: var(--orange); }
-        .btn-primary { background: var(--orange); color: #FFF; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-sec { background: transparent; color: var(--textSec); border: none; padding: 12px; font-weight: bold; cursor: pointer; }
-        
+        .btn-primary { background: var(--orange); color: #FFF; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .btn-sec { background: transparent; color: var(--textSec); border: none; padding: 12px; font-weight: bold; cursor: pointer; font-size: 14px; text-align: center; }
         .marker-item { display: flex; align-items: center; background: var(--bg); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,188,212,0.2); margin-bottom: 8px; }
         .marker-time { background: rgba(0,188,212,0.1); color: var(--teal); padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; }
         .marker-name { flex: 1; margin: 0 10px; font-size: 13px; font-weight: bold; }
-
-        /* Splash inicial */
         #startOverlay { position:fixed; inset:0; background:var(--bg); z-index:999; display:flex; align-items:center; justify-content:center; flex-direction:column; }
         .start-btn { margin-top:20px; padding:15px 30px; background:var(--orange); color:#FFF; border:none; border-radius:30px; font-weight:bold; font-size:16px; cursor:pointer; }
     </style>
 </head>
 <body>
 
-    <div id="startOverlay">
-        <h1 style="color:var(--orange);font-weight:900;">DF STUDIO WEB</h1>
-        <button class="start-btn" onclick="initAudio()">LIGAR MOTOR DE ÁUDIO</button>
-    </div>
+<div id="startOverlay">
+    <h1 style="color:var(--orange);font-weight:900;">🎤 DF STUDIO</h1>
+    <p style="color:var(--textSec);margin:10px 0">Estúdio Profissional</p>
+    <button class="start-btn" onclick="initAudio()">LIGAR MOTOR DE ÁUDIO</button>
+    <p style="color:var(--textSec);font-size:11px;margin-top:10px" id="startMsg"></p>
+</div>
 
-    <div class="devices-row">
-        <div class="device-btn" style="border-color:var(--orange)"><span style="color:var(--orange)">🎤</span> Microfone Padrão</div>
-        <div class="device-btn" style="border-color:var(--teal)"><span style="color:var(--teal)">🔊</span> Saída Padrão</div>
-    </div>
-    <div class="stats-bar">
-        <div><span id="st-sr">48.0k</span> | <span id="st-buf">128buf</span> | LAT <span id="st-lat">10ms</span> | DSP <span class="dsp" id="st-dsp">12%</span></div>
-    </div>
+<div class="devices-row">
+    <div class="device-btn" style="border-color:var(--orange)"><span style="color:var(--orange)">🎤</span> Microfone</div>
+    <div class="device-btn" style="border-color:var(--teal)"><span style="color:var(--teal)">🔊</span> Saída</div>
+</div>
+<div class="stats-bar">
+    <span id="st-sr">48.0k</span> | <span id="st-buf">128buf</span> | LAT <span id="st-lat">--ms</span> | DSP <span class="dsp" id="st-dsp">--%</span>
+</div>
 
-    <div class="presets-row">
-        <div class="preset-btn" id="ps1" onpointerdown="presetDown(1, 'FORRÓ', this)" onpointerup="presetUp(1)">FORRÓ<div class="progress-bar"></div></div>
-        <div class="preset-btn" id="ps2" onpointerdown="presetDown(2, 'PISEIRO', this)" onpointerup="presetUp(2)">PISEIRO<div class="progress-bar"></div></div>
-        <div class="preset-btn" id="ps3" onpointerdown="presetDown(3, 'SERTANEJO', this)" onpointerup="presetUp(3)">SERTANEJO<div class="progress-bar"></div></div>
-        <div class="preset-btn reset" onclick="resetMixer()">RESET</div>
-    </div>
+<div class="presets-row">
+    <div class="preset-btn" id="ps1"><span>FORRÓ</span><div class="progress-bar"></div></div>
+    <div class="preset-btn" id="ps2"><span>PISEIRO</span><div class="progress-bar"></div></div>
+    <div class="preset-btn" id="ps3"><span>SERTANEJO</span><div class="progress-bar"></div></div>
+    <div class="preset-btn reset" onclick="resetMixer()">RESET</div>
+</div>
 
-    <div class="player-widget">
-        <div class="pw-header">
-            <div class="pw-title"><span style="color:var(--teal)">🎵</span> <span id="trackName">Nenhum ficheiro</span></div>
-            <div class="pw-badge" id="markerCount">0</div>
+<div class="player-widget">
+    <div class="pw-header">
+        <div class="pw-title"><span style="color:var(--teal)">🎵</span> <span id="trackName">Nenhum ficheiro</span></div>
+        <div class="pw-badge" id="markerCount">0</div>
+    </div>
+    <div class="pw-seek-row">
+        <span id="timeCur" class="mono">00:00</span>
+        <div class="seek-container">
+            <div class="seek-track" id="seekTrack">
+                <div class="seek-fill" id="seekFill"></div>
+                <div id="markersContainer"></div>
+            </div>
+            <input type="range" class="seek-input" id="seekInput" min="0" max="1000" value="0">
         </div>
-        <div class="pw-seek-row">
-            <span id="timeCur" class="mono">00:00</span>
-            <div class="seek-container">
-                <div class="seek-track" id="seekTrack">
-                    <div class="seek-fill" id="seekFill"></div>
-                    <div id="markersContainer"></div>
-                </div>
-                <input type="range" class="seek-input" id="seekInput" min="0" max="1000" value="0">
-            </div>
-            <span id="timeTot" class="mono">00:00</span>
-        </div>
-        <div class="pw-controls">
-            <button class="pw-btn" onclick="navMarker(-1)">⏪</button>
-            <button class="pw-btn play" id="btnPlay" onclick="togglePlay()">▶</button>
-            <button class="pw-btn" onclick="navMarker(1)">⏩</button>
-            <button class="pw-btn orange" onclick="openAddMarker()">📍</button>
-            <button class="pw-btn orange" onclick="openListMarkers()">📄</button>
-            <button class="pw-btn" onclick="stopTrack()">⏹</button>
-            <input type="file" id="fileIn" accept="audio/*" style="display:none" onchange="loadFile(event)">
-            <button class="pw-btn" onclick="document.getElementById('fileIn').click()">📁</button>
-        </div>
+        <span id="timeTot" class="mono">00:00</span>
     </div>
+    <div class="pw-controls">
+        <button class="pw-btn orange" onclick="navMarker(-1)">⏪</button>
+        <button class="pw-btn play" id="btnPlay" onclick="togglePlay()">▶️</button>
+        <button class="pw-btn orange" onclick="navMarker(1)">⏩</button>
+        <button class="pw-btn orange" onclick="openAddMarker()">📍</button>
+        <button class="pw-btn orange" onclick="openListMarkers()">📄</button>
+        <button class="pw-btn" onclick="stopTrack()">⏹</button>
+        <input type="file" id="fileIn" accept="audio/*" style="display:none" onchange="loadFile(event)">
+        <button class="pw-btn" onclick="document.getElementById('fileIn').click()">📁</button>
+    </div>
+</div>
 
-    <div class="strips-container">
-        <div class="strip">
-            <div class="strip-top" style="background:var(--orange)"></div>
-            <div class="strip-header" style="color:var(--orange)">🎤 VOZ</div>
-            
-            <div class="param-row"><span>GANHO</span><span class="param-val" style="color:var(--orange)" id="val-gain1">0 dB</span></div>
-            <div class="knob-container" onpointerdown="startKnob(event, 'gain1')" style="color:var(--orange)">
-                <div class="knob-bg"></div><canvas class="knob-arc"></canvas>
-                <div class="knob-dial" id="dial-gain1"><div class="knob-dot"></div></div>
-            </div>
-
-            <div class="btn-row" style="margin-top:6px">
-                <div class="sm-btn" id="btn-fx" onclick="toggleBtn(this)" style="color:var(--orange)">FX</div>
-                <div class="sm-btn active" id="btn-at" onclick="toggleBtn(this)" style="color:var(--orange)">AT</div>
-            </div>
-            <div class="btn-row" style="color:var(--orange)">
-                <div class="sm-btn pan p1" onclick="setPan(1,-1)">L</div>
-                <div class="sm-btn pan p1 active" onclick="setPan(1,0)">C</div>
-                <div class="sm-btn pan p1" onclick="setPan(1,1)">R</div>
-            </div>
-            <div class="btn-row">
-                <div class="sm-btn solo" id="solo1" onclick="toggleBtn(this, 'solo')">S</div>
-                <div class="sm-btn mute active" id="mute1" onclick="toggleBtn(this, 'mute', updateVols)">M</div>
-            </div>
-
-            <div class="fader-area">
-                <div class="vu-container"><canvas class="vu-canvas" id="vu-mic"></canvas></div>
-                <div class="fader-wrapper">
-                    <div class="fader-val mono" style="color:var(--orange)" id="val-fad1">0 dB</div>
-                    <div class="fader-track-container" onpointerdown="startFader(event, 'fad1', true)">
-                        <div class="fader-track"><div class="fader-fill" id="fill-fad1" style="color:var(--orange)"></div></div>
-                        <div class="fader-thumb" id="thumb-fad1" style="color:var(--orange)"><div class="fader-thumb-line"></div></div>
-                    </div>
-                </div>
-            </div>
+<div class="strips-container">
+    <!-- VOZ -->
+    <div class="strip">
+        <div class="strip-top" style="background:var(--orange)"></div>
+        <div class="strip-header" style="color:var(--orange)">🎤 VOZ</div>
+        <div class="param-row"><span>GANHO</span><span class="param-val" style="color:var(--orange)" id="val-gain1">0 dB</span></div>
+        <div class="knob-container" onpointerdown="startKnob(event, 'gain1')" style="color:var(--orange)">
+            <div class="knob-bg"></div><canvas class="knob-arc"></canvas>
+            <div class="knob-dial" id="dial-gain1"><div class="knob-dot"></div></div>
         </div>
-
-        <div class="strip">
-            <div class="strip-top" style="background:var(--teal)"></div>
-            <div class="strip-header" style="color:var(--teal)">🎵 PLAY</div>
-            
-            <div class="param-row"><span>GANHO</span><span class="param-val" style="color:var(--teal)" id="val-gain2">-3 dB</span></div>
-            <div class="knob-container" onpointerdown="startKnob(event, 'gain2')" style="color:var(--teal)">
-                <div class="knob-bg"></div><canvas class="knob-arc"></canvas>
-                <div class="knob-dial" id="dial-gain2"><div class="knob-dot"></div></div>
-            </div>
-
-            <div class="btn-row" style="margin-top:6px">
-                <div class="sm-btn teal" id="btn-mono" onclick="toggleBtn(this)">MONO</div>
-            </div>
-            <div class="btn-row" style="color:var(--teal)">
-                <div class="sm-btn pan p2" onclick="setPan(2,-1)">L</div>
-                <div class="sm-btn pan p2 active" onclick="setPan(2,0)">C</div>
-                <div class="sm-btn pan p2" onclick="setPan(2,1)">R</div>
-            </div>
-            <div class="btn-row">
-                <div class="sm-btn solo" id="solo2" onclick="toggleBtn(this, 'solo')">S</div>
-                <div class="sm-btn mute active" id="mute2" onclick="toggleBtn(this, 'mute', updateVols)">M</div>
-            </div>
-
-            <div class="fader-area">
-                <div class="vu-container"><canvas class="vu-canvas" id="vu-play"></canvas></div>
-                <div class="fader-wrapper">
-                    <div class="fader-val mono" style="color:var(--teal)" id="val-fad2">0 dB</div>
-                    <div class="fader-track-container" onpointerdown="startFader(event, 'fad2', true)">
-                        <div class="fader-track"><div class="fader-fill" id="fill-fad2" style="color:var(--teal)"></div></div>
-                        <div class="fader-thumb" id="thumb-fad2" style="color:var(--teal)"><div class="fader-thumb-line"></div></div>
-                    </div>
+        <div class="btn-row" style="margin-top:6px">
+            <div class="sm-btn active" id="btn-fx" onclick="toggleBtn(this)" style="color:var(--orange)">FX</div>
+            <div class="sm-btn" id="btn-at" onclick="toggleBtn(this)" style="color:var(--orange)">AT</div>
+        </div>
+        <div class="btn-row" style="color:var(--orange)">
+            <div class="sm-btn" onclick="setPan(1,-1)">L</div>
+            <div class="sm-btn active" onclick="setPan(1,0)">C</div>
+            <div class="sm-btn" onclick="setPan(1,1)">R</div>
+        </div>
+        <div class="btn-row">
+            <div class="sm-btn solo" id="solo1" onclick="toggleBtn(this, 'solo')">S</div>
+            <div class="sm-btn mute active" id="mute1" onclick="toggleBtn(this, 'mute', updateVols)">M</div>
+        </div>
+        <div class="fader-area">
+            <div class="vu-container"><canvas class="vu-canvas" id="vu-mic"></canvas></div>
+            <div class="fader-wrapper">
+                <div class="fader-val mono" style="color:var(--orange)" id="val-fad1">0 dB</div>
+                <div class="fader-track-container" onpointerdown="startFader(event, 'fad1')">
+                    <div class="fader-track"><div class="fader-fill" id="fill-fad1" style="color:var(--orange)"></div></div>
+                    <div class="fader-thumb" id="thumb-fad1" style="color:var(--orange)"><div class="fader-thumb-line"></div></div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="strip master">
-            <div class="strip-top" style="background:var(--orange)"></div>
-            <div class="strip-header" style="color:var(--orange)">🔊 MASTER</div>
-            
-            <div style="width:100%;padding:2px 5px;margin-top:2px;">
-                <div class="param-row" style="padding:0"><span>MON SW</span><span class="param-val" style="color:var(--orange)" id="txt-monsw">ON</span></div>
-                <div class="sm-btn" id="btn-monsw" onclick="toggleMonSw()" style="background:rgba(255,109,0,0.14);border-color:var(--orange);color:var(--orange);height:18px;margin-top:2px;">RETORNO APP</div>
-            </div>
-            
-            <div class="param-row"><span>MONITOR</span><span class="param-val" style="color:var(--orange)" id="val-gain3">0 dB</span></div>
-            <div class="knob-container" onpointerdown="startKnob(event, 'gain3')" style="color:var(--orange)">
-                <div class="knob-bg"></div><canvas class="knob-arc"></canvas>
-                <div class="knob-dial" id="dial-gain3"><div class="knob-dot"></div></div>
-            </div>
-
-            <div class="btn-row" style="color:var(--orange);margin-top:6px;">
-                <div class="sm-btn pan p3" onclick="setPan(3,-1)">L</div>
-                <div class="sm-btn pan p3 active" onclick="setPan(3,0)">C</div>
-                <div class="sm-btn pan p3" onclick="setPan(3,1)">R</div>
-            </div>
-            <div class="btn-row">
-                <div class="sm-btn" style="visibility:hidden">S</div>
-                <div class="sm-btn mute" id="mute3" onclick="toggleBtn(this, 'mute', updateVols)">M</div>
-            </div>
-
-            <div class="fader-area">
-                <div class="vu-container"><canvas class="vu-canvas" id="vu-masterL"></canvas></div>
-                <div class="fader-wrapper">
-                    <div class="fader-val mono" style="color:var(--orange)" id="val-fad3">0 dB</div>
-                    <div class="fader-track-container" onpointerdown="startFader(event, 'fad3', false)">
-                        <div class="fader-track"><div class="fader-fill" id="fill-fad3" style="color:var(--orange)"></div></div>
-                        <div class="fader-thumb" id="thumb-fad3" style="color:var(--orange);width:38px"><div class="fader-thumb-line"></div></div>
-                    </div>
+    <!-- PLAY -->
+    <div class="strip">
+        <div class="strip-top" style="background:var(--teal)"></div>
+        <div class="strip-header" style="color:var(--teal)">🎵 PLAY</div>
+        <div class="param-row"><span>GANHO</span><span class="param-val" style="color:var(--teal)" id="val-gain2">-3 dB</span></div>
+        <div class="knob-container" onpointerdown="startKnob(event, 'gain2')" style="color:var(--teal)">
+            <div class="knob-bg"></div><canvas class="knob-arc"></canvas>
+            <div class="knob-dial" id="dial-gain2"><div class="knob-dot"></div></div>
+        </div>
+        <div class="btn-row" style="margin-top:6px"><div class="sm-btn teal" id="btn-mono" onclick="toggleBtn(this)">MONO</div></div>
+        <div class="btn-row" style="color:var(--teal)">
+            <div class="sm-btn" onclick="setPan(2,-1)">L</div>
+            <div class="sm-btn active" onclick="setPan(2,0)">C</div>
+            <div class="sm-btn" onclick="setPan(2,1)">R</div>
+        </div>
+        <div class="btn-row">
+            <div class="sm-btn solo" id="solo2" onclick="toggleBtn(this, 'solo')">S</div>
+            <div class="sm-btn mute active" id="mute2" onclick="toggleBtn(this, 'mute', updateVols)">M</div>
+        </div>
+        <div class="fader-area">
+            <div class="vu-container"><canvas class="vu-canvas" id="vu-play"></canvas></div>
+            <div class="fader-wrapper">
+                <div class="fader-val mono" style="color:var(--teal)" id="val-fad2">0 dB</div>
+                <div class="fader-track-container" onpointerdown="startFader(event, 'fad2')">
+                    <div class="fader-track"><div class="fader-fill" id="fill-fad2" style="color:var(--teal)"></div></div>
+                    <div class="fader-thumb" id="thumb-fad2" style="color:var(--teal)"><div class="fader-thumb-line"></div></div>
                 </div>
-                <div class="vu-container"><canvas class="vu-canvas" id="vu-masterR"></canvas></div>
-                <div class="scale"><span>+12</span><span>+6</span><span>0</span><span>-12</span><span>-30</span><span>-∞</span></div>
             </div>
         </div>
     </div>
 
-    <div class="overlay" id="dlgMarker">
-        <div class="dialog">
-            <div class="dlg-title" id="dlgMarkerTitle">NOVO MARCADOR</div>
-            <div style="font-size:12px;color:var(--textSec)">Nome do marcador:</div>
-            <input type="text" id="inMarkerName" placeholder="Ex: Refrão, Solo...">
-            <button class="btn-primary" onclick="saveMarker()">GUARDAR</button>
-            <button class="btn-sec" onclick="closeDlg('dlgMarker')">CANCELAR</button>
+    <!-- MASTER -->
+    <div class="strip master">
+        <div class="strip-top" style="background:var(--orange)"></div>
+        <div class="strip-header" style="color:var(--orange)">🔊 MASTER</div>
+        <div style="width:100%;padding:2px 5px;margin-top:2px;">
+            <div class="param-row" style="padding:0"><span>MON SW</span><span class="param-val" style="color:var(--orange)" id="txt-monsw">ON</span></div>
+            <div class="sm-btn active" id="btn-monsw" onclick="toggleMonSw()" style="height:18px;margin-top:2px;">RETORNO APP</div>
+        </div>
+        <div class="param-row"><span>MONITOR</span><span class="param-val" style="color:var(--orange)" id="val-gain3">0 dB</span></div>
+        <div class="knob-container" onpointerdown="startKnob(event, 'gain3')" style="color:var(--orange)">
+            <div class="knob-bg"></div><canvas class="knob-arc"></canvas>
+            <div class="knob-dial" id="dial-gain3"><div class="knob-dot"></div></div>
+        </div>
+        <div class="btn-row" style="color:var(--orange);margin-top:6px;">
+            <div class="sm-btn" onclick="setPan(3,-1)">L</div>
+            <div class="sm-btn active" onclick="setPan(3,0)">C</div>
+            <div class="sm-btn" onclick="setPan(3,1)">R</div>
+        </div>
+        <div class="btn-row">
+            <div class="sm-btn" style="visibility:hidden">S</div>
+            <div class="sm-btn mute" id="mute3" onclick="toggleBtn(this, 'mute', updateVols)">M</div>
+        </div>
+        <div class="fader-area">
+            <div class="vu-container"><canvas class="vu-canvas" id="vu-masterL"></canvas></div>
+            <div class="fader-wrapper">
+                <div class="fader-val mono" style="color:var(--orange)" id="val-fad3">0 dB</div>
+                <div class="fader-track-container" onpointerdown="startFader(event, 'fad3')">
+                    <div class="fader-track"><div class="fader-fill" id="fill-fad3" style="color:var(--orange)"></div></div>
+                    <div class="fader-thumb" id="thumb-fad3" style="color:var(--orange);width:38px"><div class="fader-thumb-line"></div></div>
+                </div>
+            </div>
+            <div class="vu-container"><canvas class="vu-canvas" id="vu-masterR"></canvas></div>
+            <div class="scale"><span>+12</span><span>+6</span><span>0</span><span>-12</span><span>-30</span><span>-∞</span></div>
         </div>
     </div>
+</div>
 
-    <div class="overlay" id="dlgList">
-        <div class="dialog" style="max-height:80vh;display:flex;flex-direction:column;">
-            <div class="dlg-title" style="color:var(--orange)">MARCADORES</div>
-            <div style="overflow-y:auto;flex:1;margin:10px 0;" id="markerListDiv"></div>
-            <button class="btn-sec" onclick="closeDlg('dlgList')">FECHAR</button>
-        </div>
+<div class="overlay" id="dlgMarker">
+    <div class="dialog">
+        <div class="dlg-title">📍 NOVO MARCADOR</div>
+        <input type="text" id="inMarkerName" placeholder="Nome do marcador">
+        <button class="btn-primary" onclick="saveMarker()">💾 GUARDAR</button>
+        <button class="btn-sec" onclick="document.getElementById('dlgMarker').style.display='none'">CANCELAR</button>
     </div>
+</div>
 
-    <div class="overlay" id="dlgPreset">
-        <div class="dialog">
-            <div class="dlg-title">Guardar Preset: <span id="presetTitleName" style="color:var(--orange)"></span></div>
-            <div style="font-size:11px;color:var(--orange);font-weight:bold">Irás guardar todos os efeitos e afinação ATUAIS neste botão.</div>
-            <input type="text" id="inPresetName" placeholder="Nome do atalho">
-            <button class="btn-primary" onclick="confirmSavePreset()">GUARDAR ATUAL</button>
-            <button class="btn-sec" onclick="closeDlg('dlgPreset')">CANCELAR</button>
-        </div>
+<div class="overlay" id="dlgList">
+    <div class="dialog" style="max-height:80vh;display:flex;flex-direction:column;">
+        <div class="dlg-title" style="color:var(--orange)">📄 MARCADORES</div>
+        <div style="overflow-y:auto;flex:1;margin:10px 0;" id="markerListDiv"><p style="color:var(--textSec);text-align:center">Nenhum marcador</p></div>
+        <button class="btn-sec" onclick="document.getElementById('dlgList').style.display='none'">FECHAR</button>
     </div>
+</div>
 
 <script>
-    // --- ESTADO GLOBAL (Simulando o AudioEngine e SettingsManager do Android) ---
-    const state = {
-        gain1: 0.5, gain2: 0.4, gain3: 0.5, // 0..1
-        fad1: 0.5, fad2: 0.5, fad3: 0.5, // 0..1 (0.5 = 0dB na escala GainMath)
-        monSw: true
-    };
-    
-    // Matemática de Ganho convertida da classe GainMath.kt original
-    function sliderToDb(v) {
-        if(v <= 0.001) return -60;
-        if(v <= 0.5) return -60 + (v/0.5)*60;
-        return ((v-0.5)/0.5)*10;
-    }
-    function dbToSlider(db) {
-        if(db <= -60) return 0;
-        if(db <= 0) return ((db+60)/60)*0.5;
-        return 0.5 + (db/10)*0.5;
-    }
-    function formatDb(v) {
-        let db = sliderToDb(v);
-        if(db <= -59.9) return "-∞";
-        if(Math.abs(db) < 0.1) return "0 dB";
-        return (db > 0 ? "+" : "") + Math.round(db) + " dB";
-    }
-    function sliderToLinear(v) {
-        let db = sliderToDb(v);
-        if(db <= -59.9) return 0;
-        return Math.pow(10, db/20);
-    }
+let ctx, gainMic, gainPlay, gainMaster, panMic, panPlay, anaMic, anaPlay, anaML, anaMR;
+let audioBuf, srcNode, isPlaying = false, startT = 0, pauseT = 0;
+let markers = [];
+let state = { gain1:0.65, gain2:0.40, gain3:0.50, fad1:0.50, fad2:0.50, fad3:0.50, monSw:true };
+let vuData = new Uint8Array(128);
+let peaks = {mic:-60, play:-60, mL:-60, mR:-60}, peakTimers = {mic:0, play:0, mL:0, mR:0};
+let activeDrag = null;
 
-    // --- RENDERIZAÇÃO DOS CONTROLOS (Canvas) ---
-    function drawKnob(id, val) {
-        let el = document.getElementById(`dial-${id}`);
-        let angle = (val * 270) - 135;
-        el.style.transform = `rotate(${angle}deg)`;
-        document.getElementById(`val-${id}`).innerText = formatDb(val);
-        
-        let cvs = el.previousElementSibling;
-        if(!cvs.ctx) { cvs.width=cvs.clientWidth*2; cvs.height=cvs.clientHeight*2; cvs.ctx=cvs.getContext('2d'); }
-        let ctx = cvs.ctx; ctx.clearRect(0,0,cvs.width,cvs.height);
-        ctx.beginPath(); ctx.arc(cvs.width/2, cvs.height/2, cvs.width/2 - 4, 0.75*Math.PI, 0.75*Math.PI + (val * 1.5 * Math.PI));
-        ctx.strokeStyle = getComputedStyle(el.parentElement).color; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.stroke();
-    }
-    
-    function drawFader(id, val) {
-        document.getElementById(`fill-${id}`).style.height = (val*100)+'%';
-        document.getElementById(`thumb-${id}`).style.bottom = (val*100)+'%';
-        document.getElementById(`val-${id}`).innerText = formatDb(val);
-    }
+function sliderToDb(v) { if(v<=0.001) return -60; if(v<=0.5) return -60+(v/0.5)*60; return ((v-0.5)/0.5)*10; }
+function formatDb(v) { let db=sliderToDb(v); if(db<=-59.9) return "-∞"; if(Math.abs(db)<0.1) return "0 dB"; return (db>0?"+":"")+Math.round(db)+" dB"; }
+function sliderToLinear(v) { let db=sliderToDb(v); if(db<=-59.9) return 0; return Math.pow(10,db/20); }
+function fmtT(s) { let m=Math.floor(s/60), sc=Math.floor(s%60); return m.toString().padStart(2,'0')+':'+sc.toString().padStart(2,'0'); }
 
-    // Inicialização da UI base
-    ['gain1','gain2','gain3'].forEach(id => drawKnob(id, state[id]));
-    ['fad1','fad2','fad3'].forEach(id => drawFader(id, state[id]));
+async function initAudio() {
+    document.getElementById('startOverlay').style.display = 'none';
+    ctx = new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});
+    gainMic=ctx.createGain(); panMic=ctx.createStereoPanner(); anaMic=ctx.createAnalyser(); anaMic.fftSize=256;
+    gainPlay=ctx.createGain(); panPlay=ctx.createStereoPanner(); anaPlay=ctx.createAnalyser(); anaPlay.fftSize=256;
+    gainMaster=ctx.createGain(); anaML=ctx.createAnalyser(); anaMR=ctx.createAnalyser();
+    gainMic.connect(panMic); panMic.connect(anaMic); anaMic.connect(gainMaster);
+    gainPlay.connect(panPlay); panPlay.connect(anaPlay); anaPlay.connect(gainMaster);
+    gainMaster.connect(anaML); gainMaster.connect(anaMR); gainMaster.connect(ctx.destination);
+    try { let stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,autoGainControl:false,noiseSuppression:false}}); ctx.createMediaStreamSource(stream).connect(gainMic); } catch(e) {}
+    document.getElementById('st-sr').textContent=(ctx.sampleRate/1000).toFixed(1)+'k';
+    document.getElementById('mute1').classList.remove('active'); updateVols();
+    requestAnimationFrame(drawVUs);
+}
 
-    // Gestão de Toque/Arrastamento (Pointers)
-    let activeDrag = null;
-    function startKnob(e, id) { activeDrag = { id:id, type:'knob', startY: e.clientY, startVal: state[id] }; }
-    function startFader(e, id, doubleCheck) { 
-        let track = document.getElementById(`fill-${id}`).parentElement;
-        let rect = track.getBoundingClientRect();
-        let val = 1 - ((e.clientY - rect.top) / rect.height);
-        val = Math.max(0, Math.min(1, val));
-        state[id] = val; drawFader(id, val); updateVols();
-        activeDrag = { id:id, type:'fader', track:track }; 
+function updateVols() {
+    if(!ctx) return;
+    let m1=document.getElementById('mute1').classList.contains('active');
+    let m2=document.getElementById('mute2').classList.contains('active');
+    let m3=document.getElementById('mute3').classList.contains('active');
+    gainMic.gain.value=m1?0:sliderToLinear(state.fad1)*sliderToLinear(state.gain1);
+    gainPlay.gain.value=m2?0:sliderToLinear(state.fad2)*sliderToLinear(state.gain2);
+    gainMaster.gain.value=m3?0:sliderToLinear(state.fad3);
+}
+
+function toggleMonSw() {
+    state.monSw=!state.monSw;
+    document.getElementById('txt-monsw').textContent=state.monSw?'ON':'OFF';
+    let b=document.getElementById('btn-monsw');
+    b.textContent=state.monSw?'RETORNO APP':'DIRECT MON';
+    if(state.monSw) b.classList.add('active'); else b.classList.remove('active');
+}
+
+function drawKnob(id, val) {
+    let el=document.getElementById('dial-'+id);
+    el.style.transform='rotate('+((val*270)-135)+'deg)';
+    let lbl=document.getElementById('val-'+id);
+    if(lbl) lbl.textContent=formatDb(val);
+    let cvs=el.previousElementSibling;
+    if(!cvs.ctx){cvs.width=cvs.clientWidth*2;cvs.height=cvs.clientHeight*2;cvs.ctx=cvs.getContext('2d');}
+    let ctx2=cvs.ctx;ctx2.clearRect(0,0,cvs.width,cvs.height);
+    ctx2.beginPath();ctx2.arc(cvs.width/2,cvs.height/2,cvs.width/2-4,0.75*Math.PI,0.75*Math.PI+val*1.5*Math.PI);
+    ctx2.strokeStyle=getComputedStyle(el.parentElement).color;ctx2.lineWidth=5;ctx2.lineCap='round';ctx2.stroke();
+}
+
+function drawFader(id, val) {
+    document.getElementById('fill-'+id).style.height=(val*100)+'%';
+    document.getElementById('thumb-'+id).style.bottom=(val*100)+'%';
+    let lbl=document.getElementById('val-'+id);
+    if(lbl) lbl.textContent=formatDb(val);
+}
+
+['gain1','gain2','gain3'].forEach(id=>drawKnob(id,state[id]));
+['fad1','fad2','fad3'].forEach(id=>drawFader(id,state[id]));
+
+function startKnob(e, id) { activeDrag={id,type:'knob',startY:e.clientY,startVal:state[id]}; }
+function startFader(e, id) {
+    let track=document.getElementById('fill-'+id).parentElement;
+    let rect=track.getBoundingClientRect();
+    let val=1-((e.clientY-rect.top)/rect.height);
+    val=Math.max(0,Math.min(1,val));
+    state[id]=val;drawFader(id,val);updateVols();
+    activeDrag={id,type:'fader',track};
+}
+
+document.addEventListener('pointermove', e => {
+    if(!activeDrag) return;
+    if(activeDrag.type==='knob') {
+        let diff=(activeDrag.startY-e.clientY)/200;
+        let n=Math.max(0,Math.min(1,activeDrag.startVal+diff));
+        state[activeDrag.id]=n;drawKnob(activeDrag.id,n);updateVols();
+    } else if(activeDrag.type==='fader') {
+        let rect=activeDrag.track.getBoundingClientRect();
+        let val=1-((e.clientY-rect.top)/rect.height);
+        state[activeDrag.id]=Math.max(0,Math.min(1,val));
+        drawFader(activeDrag.id,state[activeDrag.id]);updateVols();
     }
-    
-    document.addEventListener('pointermove', e => {
-        if(!activeDrag) return;
-        if(activeDrag.type === 'knob') {
-            let diff = (activeDrag.startY - e.clientY) / 200;
-            let n = Math.max(0, Math.min(1, activeDrag.startVal + diff));
-            state[activeDrag.id] = n; drawKnob(activeDrag.id, n); updateVols();
-        } else if(activeDrag.type === 'fader') {
-            let rect = activeDrag.track.getBoundingClientRect();
-            let val = 1 - ((e.clientY - rect.top) / rect.height);
-            state[activeDrag.id] = Math.max(0, Math.min(1, val));
-            drawFader(activeDrag.id, state[activeDrag.id]); updateVols();
-        }
+});
+document.addEventListener('pointerup', ()=>activeDrag=null);
+
+function toggleBtn(el, type, cb) { el.classList.toggle('active'); if(cb) cb(); }
+function setPan(ch, v) {
+    let btns=document.querySelectorAll('.strip:nth-child('+ch+') .btn-row:nth-of-type(2) .sm-btn');
+    btns.forEach((b,i)=>{b.classList.remove('active');if((v===-1&&i===0)||(v===0&&i===1)||(v===1&&i===2))b.classList.add('active');});
+}
+function resetMixer() {
+    ['gain1','gain2','gain3','fad1','fad2','fad3'].forEach(id=>{state[id]=0.5;drawKnob(id,0.5);drawFader(id,0.5);});
+    updateVols();
+}
+
+function getDb(ana) {
+    if(!ana) return -60;
+    ana.getByteTimeDomainData(vuData);
+    let sum=0;for(let i=0;i<vuData.length;i++){let v=(vuData[i]-128)/128;sum+=v*v;}
+    let rms=Math.sqrt(sum/vuData.length);
+    if(rms<0.0001) return -60;
+    return Math.max(-60,20*Math.log10(rms)+12);
+}
+
+function renderVu(id, db, key) {
+    let cvs=document.getElementById(id);
+    if(!cvs.ctx){cvs.width=cvs.clientWidth*2;cvs.height=cvs.clientHeight*2;cvs.ctx=cvs.getContext('2d');}
+    let ctx2=cvs.ctx,w=cvs.width,h=cvs.height;
+    ctx2.clearRect(0,0,w,h);
+    if(db>=peaks[key]){peaks[key]=db;peakTimers[key]=0;}
+    else{peakTimers[key]++;if(peakTimers[key]>16)peaks[key]=Math.max(db,peaks[key]-1.4);}
+    let minDb=-60,maxDb=6,segs=34,gap=2,segH=(h-gap*(segs-1))/segs;
+    let active=Math.round(((db-minDb)/(maxDb-minDb))*segs);
+    for(let i=0;i<segs;i++){
+        let dbAt=minDb+(i/segs)*(maxDb-minDb),isLit=i<active;
+        let color=dbAt>=0?'#FF1744':(dbAt>=-6?'#FF6D00':(dbAt>=-18?'#FFD54F':'#00E676'));
+        ctx2.fillStyle=isLit?color:'rgba(255,255,255,0.1)';
+        ctx2.fillRect(2,h-(i+1)*segH-i*gap,w-4,segH);
+    }
+    [-18,-12,-6,0].forEach(d=>{let y=h-((d-minDb)/(maxDb-minDb))*h;ctx2.fillStyle='rgba(255,255,255,0.3)';ctx2.fillRect(0,y,w,1);});
+    if(peaks[key]>minDb){let py=h-((peaks[key]-minDb)/(maxDb-minDb))*h;ctx2.fillStyle=peaks[key]>=0?'#FF1744':'#FFF';ctx2.fillRect(0,py,w,2);}
+}
+
+function drawVUs() {
+    if(!ctx) return requestAnimationFrame(drawVUs);
+    document.getElementById('st-lat').textContent=Math.round(ctx.baseLatency*1000)+'ms';
+    renderVu('vu-mic',getDb(anaMic),'mic');
+    renderVu('vu-play',getDb(anaPlay),'play');
+    renderVu('vu-masterL',getDb(anaML),'mL');
+    renderVu('vu-masterR',getDb(anaMR),'mR');
+    if(isPlaying&&audioBuf){let t=ctx.currentTime-startT;if(t>=audioBuf.duration)stopTrack();else{document.getElementById('timeCur').textContent=fmtT(t);document.getElementById('seekFill').style.width=(t/audioBuf.duration*100)+'%';}}
+    requestAnimationFrame(drawVUs);
+}
+
+async function loadFile(e) {
+    let f=e.target.files[0];if(!f)return;
+    document.getElementById('trackName').textContent=f.name.replace(/\.[^/.]+$/,'');
+    let ab=await f.arrayBuffer();audioBuf=await ctx.decodeAudioData(ab);
+    document.getElementById('timeTot').textContent=fmtT(audioBuf.duration);
+    document.getElementById('mute2').classList.remove('active');updateVols();
+    stopTrack();loadMarkers();
+}
+
+function togglePlay() { if(!audioBuf)return; if(isPlaying){srcNode.stop();pauseT=ctx.currentTime-startT;isPlaying=false;document.getElementById('btnPlay').textContent='▶️';} else playFrom(pauseT); }
+function stopTrack() { if(srcNode)try{srcNode.stop()}catch(e){} isPlaying=false;pauseT=0;document.getElementById('btnPlay').textContent='▶️';document.getElementById('timeCur').textContent='00:00';document.getElementById('seekFill').style.width='0%'; }
+function playFrom(t) {
+    if(!audioBuf)return;
+    if(srcNode)try{srcNode.stop()}catch(e){}
+    srcNode=ctx.createBufferSource();srcNode.buffer=audioBuf;srcNode.connect(gainPlay);
+    srcNode.start(0,t);startT=ctx.currentTime-t;isPlaying=true;pauseT=t;
+    document.getElementById('btnPlay').textContent='⏸️';
+}
+
+document.getElementById('seekInput').addEventListener('input',e=>{
+    if(!audioBuf)return;let p=e.target.value/1000,t=p*audioBuf.duration;
+    document.getElementById('seekFill').style.width=(p*100)+'%';document.getElementById('timeCur').textContent=fmtT(t);
+    if(isPlaying)playFrom(t);else pauseT=t;
+});
+
+function loadMarkers() {
+    let saved=localStorage.getItem('df_marks_'+document.getElementById('trackName').textContent);
+    markers=saved?JSON.parse(saved):[];renderMarkers();
+}
+function saveMarker() {
+    let n=document.getElementById('inMarkerName').value;if(!n)return;
+    let t=isPlaying?(ctx.currentTime-startT):pauseT;
+    markers.push({name:n,t:t});markers.sort((a,b)=>a.t-b.t);
+    localStorage.setItem('df_marks_'+document.getElementById('trackName').textContent,JSON.stringify(markers));
+    document.getElementById('dlgMarker').style.display='none';renderMarkers();
+}
+function renderMarkers() {
+    document.getElementById('markerCount').textContent=markers.length;
+    let c=document.getElementById('markersContainer');c.innerHTML='';
+    let list=document.getElementById('markerListDiv');list.innerHTML='';
+    if(!audioBuf)return;
+    markers.forEach((m,i)=>{
+        let mk=document.createElement('div');mk.className='seek-marker';mk.style.left=(m.t/audioBuf.duration*100)+'%';c.appendChild(mk);
+        let div=document.createElement('div');div.className='marker-item';
+        div.innerHTML='<div class="marker-time">'+fmtT(m.t)+'</div><div class="marker-name">'+m.name+'</div><button class="pw-btn" style="color:var(--teal)" onclick="playFrom('+m.t+');document.getElementById(\'dlgList\').style.display=\'none\'">▶</button>';
+        list.appendChild(div);
     });
-    document.addEventListener('pointerup', () => activeDrag = null);
-
-    // Gestão de Botões da UI
-    function toggleBtn(el, type='normal', callback=null) { 
-        el.classList.toggle('active');
-        if(callback) callback();
-    }
-    function setPan(ch, v) {
-        let btns = document.querySelectorAll(`.p${ch}`);
-        btns.forEach(b => b.classList.remove('active'));
-        btns[v+1].classList.add('active');
-        if(ch===1 && panMic) panMic.pan.value=v;
-        if(ch===2 && panPlay) panPlay.pan.value=v;
-    }
-    function toggleMonSw() {
-        state.monSw = !state.monSw;
-        document.getElementById('txt-monsw').innerText = state.monSw ? "ON" : "OFF";
-        let b = document.getElementById('btn-monsw');
-        b.innerText = state.monSw ? "RETORNO APP" : "DIRECT MON";
-        b.style.background = state.monSw ? "rgba(255,109,0,0.14)" : "var(--surfaceHigh)";
-        b.style.borderColor = state.monSw ? "var(--orange)" : "var(--surfaceHigh)";
-        b.style.color = state.monSw ? "var(--orange)" : "var(--textSec)";
-    }
-
-    // --- PRESETS RÁPIDOS (Pressão Longa para Editar) ---
-    let pressTimer, activePresetObj = null;
-    function presetDown(id, name, el) {
-        document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
-        el.classList.add('active');
-        let bar = el.querySelector('.progress-bar');
-        bar.style.transition = 'none'; bar.style.width = '0%';
-        setTimeout(() => { bar.style.transition = 'width 0.5s linear'; bar.style.width = '100%'; }, 10);
-        
-        pressTimer = setTimeout(() => {
-            activePresetObj = { id: id, name: name, el: el };
-            document.getElementById('presetTitleName').innerText = name;
-            document.getElementById('inPresetName').value = name;
-            document.getElementById('dlgPreset').style.display = 'flex';
-            bar.style.width = '0%';
-        }, 500);
-    }
-    function presetUp(id) {
-        clearTimeout(pressTimer);
-        document.getElementById(`ps${id}`).querySelector('.progress-bar').style.width = '0%';
-    }
-    function confirmSavePreset() {
-        if(activePresetObj) {
-            let newName = document.getElementById('inPresetName').value;
-            activePresetObj.el.childNodes[0].nodeValue = newName;
-        }
-        closeDlg('dlgPreset');
-    }
-    function resetMixer() {
-        document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
-        ['gain1','gain2','gain3','fad1','fad2','fad3'].forEach(id => { state[id]=0.5; drawKnob(id,0.5); drawFader(id,0.5); });
-        updateVols();
-    }
-
-    // --- MOTOR DE ÁUDIO WEB API ---
-    let ctx, micNode, playNode, masterNode;
-    let gainMic, gainPlay, gainMaster;
-    let panMic, panPlay;
-    let anaMic, anaPlay, anaML, anaMR;
-    let audioBuf, srcNode, isPlaying = false, startT = 0, pauseT = 0;
-
-    async function initAudio() {
-        document.getElementById('startOverlay').style.display = 'none';
-        ctx = new (window.AudioContext || window.webkitAudioContext)({latencyHint: 'interactive'});
-        
-        gainMic = ctx.createGain(); panMic = ctx.createStereoPanner(); anaMic = ctx.createAnalyser(); anaMic.fftSize=256;
-        gainPlay = ctx.createGain(); panPlay = ctx.createStereoPanner(); anaPlay = ctx.createAnalyser(); anaPlay.fftSize=256;
-        gainMaster = ctx.createGain(); anaML = ctx.createAnalyser(); anaMR = ctx.createAnalyser();
-        
-        let splitter = ctx.createChannelSplitter(2);
-        
-        // Estrutura de Roteamento de Sinal
-        gainMic.connect(panMic); panMic.connect(anaMic); anaMic.connect(gainMaster);
-        gainPlay.connect(panPlay); panPlay.connect(anaPlay); anaPlay.connect(gainMaster);
-        
-        gainMaster.connect(splitter);
-        splitter.connect(anaML, 0); splitter.connect(anaMR, 1);
-        gainMaster.connect(ctx.destination);
-        
-        try {
-            // Solicita permissão ao microfone e desliga o processamento nativo do telemóvel para melhorar qualidade e latência
-            let stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation:false, autoGainControl:false, noiseSuppression:false}});
-            ctx.createMediaStreamSource(stream).connect(gainMic);
-        } catch(e) {
-            console.error("Microfone inacessível", e);
-        }
-        
-        document.getElementById('st-sr').innerText = (ctx.sampleRate/1000).toFixed(1)+'k';
-        document.getElementById('mute1').classList.remove('active'); 
-        document.getElementById('mute3').classList.remove('active'); 
-        updateVols();
-        
-        requestAnimationFrame(drawVUs);
-    }
-
-    function updateVols() {
-        if(!ctx) return;
-        let m1 = document.getElementById('mute1').classList.contains('active');
-        let m2 = document.getElementById('mute2').classList.contains('active');
-        let m3 = document.getElementById('mute3').classList.contains('active');
-        
-        gainMic.gain.value = m1 ? 0 : sliderToLinear(state.fad1) * sliderToLinear(state.gain1);
-        gainPlay.gain.value = m2 ? 0 : sliderToLinear(state.fad2) * sliderToLinear(state.gain2);
-        gainMaster.gain.value = m3 ? 0 : sliderToLinear(state.fad3);
-    }
-
-    // Lógica idêntica ao DfVuMeter do Compose (34 segmentos e Peak Hold de 16 frames)
-    let vuData = new Uint8Array(128);
-    let peaks = {mic:-60, play:-60, mL:-60, mR:-60};
-    let peakTimers = {mic:0, play:0, mL:0, mR:0};
-    
-    function getDb(ana) {
-        if(!ana) return -60;
-        ana.getByteTimeDomainData(vuData);
-        let sum = 0; for(let i=0; i<vuData.length; i++) { let v = (vuData[i]-128)/128; sum += v*v; }
-        let rms = Math.sqrt(sum/vuData.length);
-        if(rms < 0.0001) return -60;
-        return Math.max(-60, 20 * Math.log10(rms) + 12);
-    }
-
-    function renderVu(id, db, key) {
-        let cvs = document.getElementById(id);
-        if(!cvs.ctx) { cvs.width=cvs.clientWidth*2; cvs.height=cvs.clientHeight*2; cvs.ctx=cvs.getContext('2d'); }
-        let ctx = cvs.ctx, w = cvs.width, h = cvs.height;
-        ctx.clearRect(0,0,w,h);
-        
-        if(db >= peaks[key]) { peaks[key] = db; peakTimers[key] = 0; }
-        else { peakTimers[key]++; if(peakTimers[key]>16) peaks[key] = Math.max(db, peaks[key]-1.4); }
-
-        let minDb = -60, maxDb = 6, segs = 34, gap = 2;
-        let segH = (h - gap*(segs-1))/segs;
-        let active = Math.round(((db - minDb)/(maxDb - minDb)) * segs);
-        
-        for(let i=0; i<segs; i++) {
-            let dbAt = minDb + (i/segs)*(maxDb-minDb);
-            let isLit = i < active;
-            let color = dbAt>=0 ? '#FF1744' : (dbAt>=-6 ? '#FF6D00' : (dbAt>=-18 ? '#FFD54F' : '#00E676'));
-            ctx.fillStyle = isLit ? color : 'rgba(255,255,255,0.1)';
-            ctx.fillRect(2, h - (i+1)*segH - i*gap, w-4, segH);
-        }
-        
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        [-18,-12,-6,0].forEach(d => { let y = h - ((d-minDb)/(maxDb-minDb))*h; ctx.fillRect(0,y,w,1); });
-        
-        if(peaks[key] > minDb) {
-            let py = h - ((peaks[key]-minDb)/(maxDb-minDb))*h;
-            ctx.fillStyle = peaks[key]>=0 ? '#FF1744' : '#FFF';
-            ctx.fillRect(0, py, w, 2);
-        }
-    }
-
-    function drawVUs() {
-        renderVu('vu-mic', getDb(anaMic), 'mic');
-        renderVu('vu-play', getDb(anaPlay), 'play');
-        renderVu('vu-masterL', getDb(anaML), 'mL');
-        renderVu('vu-masterR', getDb(anaMR), 'mR');
-        
-        if(isPlaying && audioBuf) {
-            let t = ctx.currentTime - startT;
-            if(t >= audioBuf.duration) stopTrack();
-            else {
-                document.getElementById('timeCur').innerText = fmtT(t);
-                document.getElementById('seekFill').style.width = (t/audioBuf.duration*100)+'%';
-            }
-        }
-        requestAnimationFrame(drawVUs);
-    }
-
-    // --- LEITOR DE ÁUDIO & MARCADORES DE FAIXAS ---
-    let markers = [];
-    function fmtT(s) { let m=Math.floor(s/60), sc=Math.floor(s%60); return `${m.toString().padStart(2,'0')}:${sc.toString().padStart(2,'0')}`; }
-    
-    async function loadFile(e) {
-        let f = e.target.files[0]; if(!f) return;
-        document.getElementById('trackName').innerText = f.name.replace(/\.[^/.]+$/, "");
-        let ab = await f.arrayBuffer();
-        audioBuf = await ctx.decodeAudioData(ab);
-        document.getElementById('timeTot').innerText = fmtT(audioBuf.duration);
-        document.getElementById('mute2').classList.remove('active'); updateVols();
-        stopTrack(); loadMarkers();
-    }
-    
-    function togglePlay() {
-        if(!audioBuf) return;
-        if(isPlaying) { srcNode.stop(); pauseT = ctx.currentTime - startT; isPlaying = false; document.getElementById('btnPlay').innerHTML = '▶'; }
-        else { playFrom(pauseT); }
-    }
-    function playFrom(t) {
-        if(!audioBuf) return;
-        if(srcNode) { try{srcNode.stop();}catch(e){} }
-        srcNode = ctx.createBufferSource(); srcNode.buffer = audioBuf; srcNode.connect(gainPlay);
-        srcNode.start(0, t); startT = ctx.currentTime - t; isPlaying = true; pauseT = t;
-        document.getElementById('btnPlay').innerHTML = '⏸';
-    }
-    function stopTrack() {
-        if(srcNode) { try{srcNode.stop();}catch(e){} }
-        isPlaying = false; pauseT = 0; startT = ctx.currentTime;
-        document.getElementById('btnPlay').innerHTML = '▶';
-        document.getElementById('timeCur').innerText = '00:00';
-        document.getElementById('seekFill').style.width = '0%';
-    }
-
-    document.getElementById('seekInput').addEventListener('input', e => {
-        if(!audioBuf) return;
-        let p = e.target.value/1000;
-        let t = p * audioBuf.duration;
-        document.getElementById('seekFill').style.width = (p*100)+'%';
-        document.getElementById('timeCur').innerText = fmtT(t);
-        if(isPlaying) playFrom(t); else pauseT = t;
-    });
-
-    function loadMarkers() {
-        let saved = localStorage.getItem('df_web_marks_' + document.getElementById('trackName').innerText);
-        markers = saved ? JSON.parse(saved) : [];
-        renderMarkers();
-    }
-    function saveMarker() {
-        let n = document.getElementById('inMarkerName').value;
-        if(!n) return;
-        let t = isPlaying ? (ctx.currentTime - startT) : pauseT;
-        markers.push({name: n, t: t});
-        markers.sort((a,b)=>a.t - b.t);
-        localStorage.setItem('df_web_marks_' + document.getElementById('trackName').innerText, JSON.stringify(markers));
-        closeDlg('dlgMarker'); renderMarkers();
-    }
-    function renderMarkers() {
-        document.getElementById('markerCount').innerText = markers.length;
-        let c = document.getElementById('markersContainer'); c.innerHTML = '';
-        let list = document.getElementById('markerListDiv'); list.innerHTML = '';
-        if(!audioBuf) return;
-        markers.forEach((m, i) => {
-            let mk = document.createElement('div'); mk.className = 'seek-marker';
-            mk.style.left = (m.t / audioBuf.duration * 100) + '%';
-            c.appendChild(mk);
-            
-            let div = document.createElement('div'); div.className = 'marker-item';
-            div.innerHTML = `<div class="marker-time">${fmtT(m.t)}</div><div class="marker-name">${m.name}</div><button class="pw-btn" onclick="playFrom(${m.t}); closeDlg('dlgList')">▶</button>`;
-            list.appendChild(div);
-        });
-    }
-    function navMarker(dir) {
-        if(!markers.length || !audioBuf) return;
-        let cur = isPlaying ? (ctx.currentTime - startT) : pauseT;
-        let target = null;
-        if(dir === -1) target = [...markers].reverse().find(m => m.t < cur - 1) || markers[0];
-        if(dir === 1) target = markers.find(m => m.t > cur + 1) || markers[markers.length-1];
-        if(target) playFrom(target.t);
-    }
-
-    // Gestão das Janelas Modais
-    function openAddMarker() { document.getElementById('inMarkerName').value=''; document.getElementById('dlgMarker').style.display='flex'; }
-    function openListMarkers() { document.getElementById('dlgList').style.display='flex'; }
-    function closeDlg(id) { document.getElementById(id).style.display='none'; }
+    if(!markers.length) list.innerHTML='<p style="color:var(--textSec);text-align:center">Nenhum marcador</p>';
+}
+function navMarker(dir) {
+    if(!markers.length||!audioBuf)return;
+    let cur=isPlaying?(ctx.currentTime-startT):pauseT;
+    let target=dir===-1?[...markers].reverse().find(m=>m.t<cur-1)||markers[markers.length-1]:markers.find(m=>m.t>cur+1)||markers[0];
+    if(target)playFrom(target.t);
+}
+function openAddMarker(){document.getElementById('inMarkerName').value='';document.getElementById('dlgMarker').style.display='flex';}
+function openListMarkers(){document.getElementById('dlgList').style.display='flex';}
 </script>
 </body>
 </html>
