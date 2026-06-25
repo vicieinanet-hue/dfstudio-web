@@ -1,82 +1,70 @@
-class AudioEngine {
-    constructor() {
-        this.audioCtx = null;
-        this.isRunning = false;
-        this.sampleRate = 48000;
-        this.micGain = 0.65; this.playGain = 0.40; this.masterGain = 0.50;
-        this.isMicMuted = true; this.isPlayMuted = true; this.isMasterMuted = true;
-        this.isPlayMono = false;
-        this.voicePan = 0; this.playPan = 0; this.masterPan = 0;
-        this.audioBuffer = null; this.sourceNode = null;
-        this.isPlaying = false; this.playbackPosition = 0;
-        this.markers = [];
-    }
+var engine = {
+    audioCtx: null, isRunning: false, sampleRate: 48000,
+    micGain: 0.65, playGain: 0.40, masterGain: 0.50,
+    isMicMuted: true, isPlayMuted: true, isMasterMuted: true,
+    isPlayMono: false,
+    audioBuffer: null, sourceNode: null, isPlaying: false,
+    playbackPosition: 0, markers: [], sourceStartTime: 0,
+    micGainNode: null, playGainNode: null, masterGainNode: null,
+    vuData: new Uint8Array(128),
 
-    async init() {
+    init: async function() {
         try {
             this.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: this.sampleRate, latencyHint: 'interactive' });
             this.sampleRate = this.audioCtx.sampleRate;
-            this.setupAudioNodes();
-            await this.requestMicrophone();
-            console.log('✅ AudioEngine iniciado. SampleRate:', this.sampleRate);
+            this.micGainNode = this.audioCtx.createGain(); this.micGainNode.gain.value = 0;
+            this.playGainNode = this.audioCtx.createGain(); this.playGainNode.gain.value = 0;
+            this.masterGainNode = this.audioCtx.createGain(); this.masterGainNode.gain.value = 0;
+            this.analyser = this.audioCtx.createAnalyser(); this.analyser.fftSize = 256;
+            this.micGainNode.connect(this.analyser); this.analyser.connect(this.masterGainNode);
+            this.playGainNode.connect(this.masterGainNode);
+            this.masterGainNode.connect(this.audioCtx.destination);
+            try {
+                var stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+                var inputNode = this.audioCtx.createMediaStreamSource(stream);
+                inputNode.connect(this.micGainNode);
+            } catch(micErr) { console.warn('Microfone indisponivel'); }
+            console.log('AudioEngine OK sr=' + this.sampleRate);
             return true;
-        } catch (e) { console.error('❌ Erro:', e); return false; }
-    }
+        } catch(e) { console.error('AudioEngine:', e.message); return false; }
+    },
 
-    setupAudioNodes() {
-        const ctx = this.audioCtx;
-        this.micGainNode = ctx.createGain(); this.micGainNode.gain.value = 0;
-        this.playGainNode = ctx.createGain(); this.playGainNode.gain.value = 0;
-        this.masterGainNode = ctx.createGain(); this.masterGainNode.gain.value = 0;
-        this.micGainNode.connect(this.masterGainNode);
-        this.playGainNode.connect(this.masterGainNode);
-        this.masterGainNode.connect(ctx.destination);
-    }
+    setMicGain: function(v) { this.micGain = v; if(this.micGainNode) this.micGainNode.gain.value = this.isMicMuted ? 0 : v * 4; },
+    setPlayGain: function(v) { this.playGain = v; if(this.playGainNode) this.playGainNode.gain.value = this.isPlayMuted ? 0 : v; },
+    setMasterGain: function(v) { this.masterGain = v; if(this.masterGainNode) this.masterGainNode.gain.value = this.isMasterMuted ? 0 : v; },
 
-    async requestMicrophone() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-            this.inputNode = this.audioCtx.createMediaStreamSource(stream);
-            this.inputNode.connect(this.micGainNode);
-            console.log('✅ Microfone conectado');
-        } catch (e) { console.error('❌ Microfone:', e); }
-    }
+    toggleMute: function(ch) {
+        if(ch==='voice'){ this.isMicMuted=!this.isMicMuted; this.setMicGain(this.micGain); }
+        else if(ch==='play'){ this.isPlayMuted=!this.isPlayMuted; this.setPlayGain(this.playGain); }
+        else if(ch==='master'){ this.isMasterMuted=!this.isMasterMuted; this.setMasterGain(this.masterGain); }
+    },
 
-    togglePlay() {
-        if (this.isPlaying) { this.sourceNode?.stop(); this.isPlaying = false; }
-        else if (this.audioBuffer) { this.playFromPosition(this.playbackPosition); }
-    }
+    togglePlayMono: function(){ this.isPlayMono = !this.isPlayMono; },
+    getVu: function(){ if(this.analyser){ this.analyser.getByteTimeDomainData(this.vuData); var s=0; for(var i=0;i<this.vuData.length;i++) s+=Math.abs(this.vuData[i]-128); return s/this.vuData.length/128; } return 0; },
 
-    playFromPosition(pos = 0) {
-        if (!this.audioBuffer) return;
-        this.sourceNode?.stop();
+    togglePlay: function(){
+        if(this.isPlaying){ try{this.sourceNode.stop();}catch(e){} this.isPlaying=false; }
+        else if(this.audioBuffer){ this.playFromPosition(this.playbackPosition); }
+    },
+
+    playFromPosition: function(pos){
+        if(!this.audioBuffer||!this.audioCtx) return;
+        try{this.sourceNode.stop();}catch(e){}
         this.sourceNode = this.audioCtx.createBufferSource();
         this.sourceNode.buffer = this.audioBuffer;
         this.sourceNode.connect(this.playGainNode);
-        this.sourceNode.start(0, pos);
-        this.isPlaying = true; this.playbackPosition = pos;
-    }
+        this.sourceNode.start(0, pos||0);
+        this.isPlaying = true; this.playbackPosition = pos||0;
+        this.sourceStartTime = this.audioCtx.currentTime - (pos||0);
+    },
 
-    async loadAudioFile(file) {
-        const buf = await file.arrayBuffer();
-        this.audioBuffer = await this.audioCtx.decodeAudioData(buf);
-        console.log('✅ Áudio:', file.name, this.audioBuffer.duration + 's');
-    }
+    loadAudioFile: async function(file){
+        try{ var b=await file.arrayBuffer(); this.audioBuffer=await this.audioCtx.decodeAudioData(b); return true; }
+        catch(e){ console.error('Audio:',e); return false; }
+    },
 
-    setMicGain(v) { this.micGain = v; this.micGainNode.gain.value = this.isMicMuted ? 0 : v * 4; }
-    setPlayGain(v) { this.playGain = v; this.playGainNode.gain.value = this.isPlayMuted ? 0 : v; }
-    setMasterGain(v) { this.masterGain = v; this.masterGainNode.gain.value = this.isMasterMuted ? 0 : v; }
-
-    toggleMute(ch) {
-        if (ch === 'voice') { this.isMicMuted = !this.isMicMuted; this.micGainNode.gain.value = this.isMicMuted ? 0 : this.micGain * 4; }
-        else if (ch === 'play') { this.isPlayMuted = !this.isPlayMuted; this.playGainNode.gain.value = this.isPlayMuted ? 0 : this.playGain; }
-        else if (ch === 'master') { this.isMasterMuted = !this.isMasterMuted; this.masterGainNode.gain.value = this.isMasterMuted ? 0 : this.masterGain; }
-    }
-
-    togglePlayMono() { this.isPlayMono = !this.isPlayMono; }
-    getCurrentTime() { return this.audioCtx ? this.audioCtx.currentTime : 0; }
-    getDuration() { return this.audioBuffer ? this.audioBuffer.duration : 0; }
-    destroy() { this.audioCtx?.close(); this.isRunning = false; }
-}
-
-const engine = new AudioEngine();
+    getCurrentTime: function(){ return this.audioCtx?this.audioCtx.currentTime:0; },
+    getDuration: function(){ return this.audioBuffer?this.audioBuffer.duration:0; },
+    destroy: function(){ try{this.audioCtx.close();}catch(e){} this.isRunning=false; }
+};
+console.log('audio-engine.js OK');
