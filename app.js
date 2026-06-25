@@ -1,5 +1,5 @@
 // ================================================================
-// DF STUDIO PRO - WEB APP
+// DF STUDIO PRO - WEB APP (COMPLETO E CORRIGIDO)
 // ================================================================
 
 // ===== ESTADO GLOBAL =====
@@ -62,7 +62,8 @@ const state = {
     isRecording: false,
     recordingStartTime: 0,
     recDuration: 0,
-    recTimer: null
+    recTimer: null,
+    recorder: null
 };
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -74,7 +75,10 @@ const $ = id => document.getElementById(id);
 const logMsg = msg => { console.log(msg); const el = $('logMsg'); if(el) el.textContent = msg; };
 const showError = msg => { $('errorMsg').textContent = msg; $('startBtn').style.display = 'block'; };
 
-// ===== INICIALIZAÇÃO =====
+// ================================================================
+// INICIALIZAÇÃO
+// ================================================================
+
 async function initAudio() {
     try {
         $('startBtn').style.display = 'none';
@@ -92,9 +96,12 @@ async function initAudio() {
         state.processorNode = new AudioWorkletNode(state.audioCtx, 'audio-processor');
         logMsg('AudioWorklet carregado!');
 
+        // Configurar listener do processor
+        setupProcessorListener();
+
         // Configurar nós
         state.micGainNode = state.audioCtx.createGain();
-        state.micGainNode.gain.value = 2.6; // 65% * 4
+        state.micGainNode.gain.value = 2.6;
 
         state.playGainNode = state.audioCtx.createGain();
         state.playGainNode.gain.value = 0;
@@ -125,7 +132,7 @@ async function initAudio() {
         state.analyserPlay.connect(state.masterGainNode);
 
         state.masterGainNode.connect(state.analyserMaster);
-        state.analyserMaster.connect(state.audioCtx.destination);
+        state.masterGainNode.connect(state.audioCtx.destination);
 
         // Configurar efeitos no processor
         syncEffectsToProcessor();
@@ -172,7 +179,10 @@ async function initAudio() {
     }
 }
 
-// ===== UI UPDATE =====
+// ================================================================
+// UI UPDATE
+// ================================================================
+
 function updateUI() {
     if (!state.audioCtx) return;
     try {
@@ -187,11 +197,6 @@ function updateUI() {
             const ct = state.audioCtx.currentTime - state.sourceStartTime;
             $('currentTime').textContent = formatTime(ct);
             $('seekBar').value = (ct / state.audioBuffer.duration) * 1000 || 0;
-        }
-
-        // Atualizar pitch detectado
-        if (state.autotuneEnabled && state.processorNode) {
-            // O pitch é atualizado via mensagens do processor
         }
     } catch (e) {}
 }
@@ -211,7 +216,10 @@ function formatTime(s) {
     return m.toString().padStart(2, '0') + ':' + sec.toString().padStart(2, '0');
 }
 
-// ===== MIC / GAIN CONTROLS =====
+// ================================================================
+// MIC / GAIN CONTROLS
+// ================================================================
+
 function setMicGain(v) {
     const val = v / 100;
     if (state.micGainNode) {
@@ -240,7 +248,10 @@ function setMonGain(v) {
     }
 }
 
-// ===== MUTE / SOLO =====
+// ================================================================
+// MUTE / SOLO
+// ================================================================
+
 function toggleMute(ch) {
     let muted;
     if (ch === 'voice') {
@@ -303,7 +314,6 @@ function toggleMonitor() {
 }
 
 function setPan(ch, val) {
-    // Implementação via processor
     if (state.processorNode) {
         state.processorNode.port.postMessage({
             type: 'setPan',
@@ -324,7 +334,10 @@ function setPan(ch, val) {
     });
 }
 
-// ===== FX MASTER =====
+// ================================================================
+// FX MASTER
+// ================================================================
+
 function toggleFx() {
     state.fxEnabled = !state.fxEnabled;
     $('fxBtn').classList.toggle('active', state.fxEnabled);
@@ -349,9 +362,13 @@ function toggleFxMaster() {
     }
 }
 
-// ===== EFFECTS =====
+// ================================================================
+// EFFECTS
+// ================================================================
+
 function toggleEffect(name) {
     const toggle = $(name + 'Toggle');
+    if (!toggle) return;
     const isOn = toggle.classList.contains('active');
     toggle.classList.toggle('active', !isOn);
     state.effects[name] = !isOn;
@@ -386,7 +403,10 @@ function syncEffectsToProcessor() {
     });
 }
 
-// ===== AUTO-TUNE =====
+// ================================================================
+// AUTO-TUNE
+// ================================================================
+
 function toggleAutotune() {
     state.autotuneEnabled = !state.autotuneEnabled;
     $('atBtn').classList.toggle('active', state.autotuneEnabled);
@@ -420,6 +440,7 @@ function syncAutotuneToProcessor() {
 
 function initPianoKeys() {
     const container = $('pianoKeys');
+    if (!container) return;
     container.innerHTML = '';
     const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     keys.forEach(key => {
@@ -518,7 +539,10 @@ function resetAutotune() {
     syncAutotuneToProcessor();
 }
 
-// ===== PLAYBACK =====
+// ================================================================
+// PLAYBACK
+// ================================================================
+
 function togglePlay() {
     if (state.isPlaying) {
         try { state.sourceNode.stop(); } catch(e) {}
@@ -570,7 +594,6 @@ async function handleFileUpload(event) {
         state.audioBuffer = await state.audioCtx.decodeAudioData(buf);
         $('trackName').textContent = '🎵 ' + file.name.replace(/\.[^/.]+$/, '');
         $('durationTime').textContent = formatTime(state.audioBuffer.duration);
-        // Carregar marcadores salvos
         loadMarkersForTrack(file.name);
         playFromPosition(0);
     } catch (e) {
@@ -578,7 +601,10 @@ async function handleFileUpload(event) {
     }
 }
 
-// ===== MARKERS =====
+// ================================================================
+// MARKERS
+// ================================================================
+
 function showMarkerDialog() {
     $('markerDialog').classList.add('visible');
 }
@@ -611,7 +637,6 @@ function saveMarker() {
 
 function updateMarkerUI() {
     $('markerCount').textContent = state.markers.length + ' marc';
-    // Salvar no localStorage
     const trackName = $('trackName').textContent.replace('🎵 ', '');
     if (trackName && trackName !== 'Nenhuma música carregada') {
         try {
@@ -687,27 +712,31 @@ function deleteMarker(index) {
     showMarkersList();
 }
 
-// ===== TABS =====
+// ================================================================
+// TABS
+// ================================================================
+
 function switchTab(tab) {
     document.querySelectorAll('.nav-bar button').forEach(b => b.classList.remove('active'));
     document.querySelector(`.nav-bar button[data-tab="${tab}"]`).classList.add('active');
 
-    // Esconder todos os painéis
     $('mixerContainer').style.display = tab === 'mixer' ? 'flex' : 'none';
     $('effectsPanel').classList.toggle('visible', tab === 'effects');
     $('autotunePanel').classList.toggle('visible', tab === 'autotune');
     $('libraryPanel').style.display = tab === 'library' ? 'flex' : 'none';
     $('settingsPanel').style.display = tab === 'settings' ? 'flex' : 'none';
 
-    // Se for library, atualizar lista
     if (tab === 'library') updateLibraryList();
 }
 
-// ===== LIBRARY =====
+// ================================================================
+// LIBRARY
+// ================================================================
+
 function updateLibraryList() {
     const container = $('libraryList');
+    if (!container) return;
     container.innerHTML = '';
-    // Tentar carregar músicas do localStorage
     try {
         const tracks = JSON.parse(localStorage.getItem('library_tracks') || '[]');
         if (tracks.length === 0) {
@@ -731,9 +760,6 @@ function updateLibraryList() {
 }
 
 function loadTrackFromStorage(track) {
-    // Na web, não podemos carregar áudio do localStorage diretamente
-    // Usamos o File API para carregar novamente
-    // Por enquanto, apenas mostramos uma mensagem
     alert('Carregue a música novamente usando o botão 📁');
 }
 
@@ -746,10 +772,22 @@ function removeTrack(index) {
     } catch(e) {}
 }
 
-// ===== TUNER =====
+// ================================================================
+// TUNER
+// ================================================================
+
 function openTuner() {
     $('tunerDialog').classList.add('visible');
     state.tunerActive = true;
+    // Reset UI
+    document.getElementById('tunerMeter').style.width = '50%';
+    document.getElementById('tunerMeter').style.background = '#FF6D00';
+    document.getElementById('tunerStatus').textContent = 'Toque uma nota';
+    document.getElementById('tunerNote').textContent = '--';
+    document.getElementById('tunerFreq').textContent = '0 Hz';
+    // Reset selected string
+    state.tunerString = -1;
+    document.querySelectorAll('#tunerDialog .piano-key').forEach(btn => btn.classList.remove('active'));
     startTunerDetection();
 }
 
@@ -757,6 +795,9 @@ function closeTuner() {
     $('tunerDialog').classList.remove('visible');
     state.tunerActive = false;
     state.tunerString = -1;
+    if (state.processorNode) {
+        state.processorNode.port.postMessage({ type: 'stopTuner' });
+    }
 }
 
 function selectTunerString(index) {
@@ -769,10 +810,65 @@ function selectTunerString(index) {
 function startTunerDetection() {
     if (!state.processorNode) return;
     state.processorNode.port.postMessage({ type: 'startTuner' });
-    // O processador enviará mensagens com a frequência detectada
 }
 
-// ===== BACKUP =====
+function updateTunerUI(freq, note) {
+    if (!state.tunerActive) return;
+    
+    const noteEl = document.getElementById('tunerNote');
+    const freqEl = document.getElementById('tunerFreq');
+    const meterEl = document.getElementById('tunerMeter');
+    const statusEl = document.getElementById('tunerStatus');
+    
+    if (!noteEl) return;
+    
+    noteEl.textContent = note || '--';
+    noteEl.style.color = note && note !== '--' ? '#00BCD4' : '#666';
+    
+    freqEl.textContent = (freq || 0).toFixed(1) + ' Hz';
+
+    let targetFreq = 0;
+    if (state.tunerString >= 0 && state.tunerString < STRING_FREQS.length) {
+        targetFreq = STRING_FREQS[state.tunerString];
+    } else if (freq > 0) {
+        let minDiff = Infinity;
+        STRING_FREQS.forEach((f, i) => {
+            const diff = Math.abs(freq - f);
+            if (diff < minDiff) { minDiff = diff; targetFreq = f; }
+        });
+    }
+    
+    if (targetFreq > 0 && freq > 0) {
+        const cents = 1200 * Math.log2(freq / targetFreq);
+        const percent = 50 + cents / 50 * 25;
+        meterEl.style.width = Math.max(0, Math.min(100, percent)) + '%';
+        
+        const absCents = Math.abs(cents);
+        let status = 'Toque uma nota';
+        let color = '#FF6D00';
+        if (absCents < 3) { 
+            status = '✅ AFINADO!'; 
+            color = '#76FF03'; 
+        } else if (cents < 0) { 
+            status = '🔽 BAIXO ' + Math.round(absCents) + 'c'; 
+            color = '#FFD600'; 
+        } else { 
+            status = '🔼 ALTO ' + Math.round(absCents) + 'c'; 
+            color = '#FF1744'; 
+        }
+        statusEl.textContent = status;
+        meterEl.style.background = color;
+    } else {
+        meterEl.style.width = '50%';
+        statusEl.textContent = freq > 0 ? 'Detectando...' : 'Toque uma nota';
+        meterEl.style.background = '#FF6D00';
+    }
+}
+
+// ================================================================
+// BACKUP
+// ================================================================
+
 function exportBackup() {
     const data = {
         version: 1,
@@ -818,7 +914,6 @@ function importBackup(event) {
                 if (data.settings.effects) {
                     Object.assign(state.effects, data.settings.effects);
                 }
-                // Atualizar UI
                 $('fxBtn').classList.toggle('active', state.fxEnabled);
                 $('fxMasterToggle').classList.toggle('active', state.fxEnabled);
                 $('atBtn').classList.toggle('active', state.autotuneEnabled);
@@ -834,9 +929,82 @@ function importBackup(event) {
     reader.readAsText(file);
 }
 
-// ===== EVENT LISTENERS =====
+// ================================================================
+// GRAVAÇÃO
+// ================================================================
+
+function startRecording() {
+    if (state.isRecording || !state.audioCtx) return;
+    state.isRecording = true;
+    state.recordedChunks = [];
+    state.recordingStartTime = Date.now();
+
+    const dest = state.audioCtx.createMediaStreamDestination();
+    state.masterGainNode.connect(dest);
+
+    const recorder = new MediaRecorder(dest.stream, { mimeType: 'audio/webm;codecs=opus' });
+    recorder.ondataavailable = e => {
+        if (e.data.size > 0) state.recordedChunks.push(e.data);
+    };
+    recorder.onstop = () => {
+        const blob = new Blob(state.recordedChunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'DF_Studio_Recording_' + new Date().toISOString().slice(0,19).replace(/[:-]/g, '') + '.webm';
+        a.click();
+        URL.revokeObjectURL(url);
+        state.masterGainNode.disconnect(dest);
+        state.isRecording = false;
+        if (state.recTimer) {
+            clearInterval(state.recTimer);
+            state.recTimer = null;
+        }
+        logMsg('⏹️ Gravação finalizada');
+    };
+
+    state.recorder = recorder;
+    recorder.start(1000);
+
+    state.recTimer = setInterval(() => {
+        state.recDuration = Math.floor((Date.now() - state.recordingStartTime) / 1000);
+    }, 500);
+
+    logMsg('🔴 Gravando...');
+}
+
+function stopRecording() {
+    if (state.recorder && state.isRecording) {
+        state.recorder.stop();
+    }
+}
+
+// ================================================================
+// PROCESSOR LISTENER
+// ================================================================
+
+function setupProcessorListener() {
+    if (!state.processorNode) return;
+    state.processorNode.port.onmessage = (event) => {
+        const msg = event.data;
+        if (msg.type === 'pitchDetected') {
+            $('detectedPitch').textContent = msg.frequency + ' Hz';
+            $('detectedKey').textContent = msg.note || '--';
+            if (state.tunerActive) {
+                updateTunerUI(msg.frequency, msg.note);
+            }
+        }
+        if (msg.type === 'tunerData') {
+            updateTunerUI(msg.frequency, msg.note);
+        }
+    };
+}
+
+// ================================================================
+// EVENT LISTENERS
+// ================================================================
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Botão iniciar
     $('startBtn').addEventListener('click', initAudio);
 
     // Sliders
@@ -964,132 +1132,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, 800);
 
-    // Atualizar modo inicial
     document.querySelector('[data-mode="MAIOR"]').classList.add('active');
     $('autoKeyToggle').classList.add('active');
-
-    // Mostrar library list
     updateLibraryList();
 });
 
-// ===== SERVICE WORKER =====
+// ================================================================
+// SERVICE WORKER
+// ================================================================
+
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 
-// ===== AUDIO WORKLET MESSAGES =====
-// O processor envia mensagens de volta (ex: pitch detectado)
-// Configurar listener após criação
-// (será configurado no initAudio após criar o processorNode)
+// ================================================================
+// EXPORT GLOBAL
+// ================================================================
 
-// ===== GRAVAÇÃO =====
-function startRecording() {
-    if (state.isRecording) return;
-    state.isRecording = true;
-    state.recordedChunks = [];
-    state.recordingStartTime = Date.now();
-
-    // Criar stream de destino
-    const dest = state.audioCtx.createMediaStreamDestination();
-    state.masterGainNode.connect(dest);
-
-    // Criar MediaRecorder
-    const recorder = new MediaRecorder(dest.stream, { mimeType: 'audio/webm;codecs=opus' });
-    recorder.ondataavailable = e => {
-        if (e.data.size > 0) state.recordedChunks.push(e.data);
-    };
-    recorder.onstop = () => {
-        const blob = new Blob(state.recordedChunks, { type: 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'DF_Studio_Recording_' + new Date().toISOString().slice(0,19).replace(/[:-]/g, '') + '.webm';
-        a.click();
-        URL.revokeObjectURL(url);
-        state.masterGainNode.disconnect(dest);
-        state.isRecording = false;
-        if (state.recTimer) {
-            clearInterval(state.recTimer);
-            state.recTimer = null;
-        }
-    };
-
-    state.recorder = recorder;
-    recorder.start(1000);
-
-    // Timer
-    state.recTimer = setInterval(() => {
-        state.recDuration = Math.floor((Date.now() - state.recordingStartTime) / 1000);
-        // Atualizar UI (se tiver indicador)
-    }, 500);
-
-    logMsg('🔴 Gravando...');
-}
-
-function stopRecording() {
-    if (state.recorder && state.isRecording) {
-        state.recorder.stop();
-        logMsg('⏹️ Gravação finalizada');
-    }
-}
-
-// ===== CONFIGURAR LISTENER DO PROCESSOR =====
-// Isso será chamado após criar o processorNode no initAudio
-function setupProcessorListener() {
-    if (!state.processorNode) return;
-    state.processorNode.port.onmessage = (event) => {
-        const msg = event.data;
-        if (msg.type === 'pitchDetected') {
-            $('detectedPitch').textContent = msg.frequency + ' Hz';
-            $('detectedKey').textContent = msg.note || '--';
-            // Atualizar tuner se ativo
-            if (state.tunerActive) {
-                updateTunerUI(msg.frequency, msg.note);
-            }
-        }
-        if (msg.type === 'tunerData') {
-            updateTunerUI(msg.frequency, msg.note);
-        }
-    };
-}
-
-function updateTunerUI(freq, note) {
-    if (!state.tunerActive) return;
-    $('tunerNote').textContent = note || '--';
-    $('tunerFreq').textContent = (freq || 0).toFixed(1) + ' Hz';
-
-    // Calcular offset em cents
-    let targetFreq = 0;
-    if (state.tunerString >= 0) {
-        targetFreq = STRING_FREQS[state.tunerString];
-    } else if (freq > 0) {
-        // Encontrar a corda mais próxima
-        let minDiff = Infinity;
-        STRING_FREQS.forEach((f, i) => {
-            const diff = Math.abs(freq - f);
-            if (diff < minDiff) { minDiff = diff; targetFreq = f; }
-        });
-    }
-    if (targetFreq > 0 && freq > 0) {
-        const cents = 1200 * Math.log2(freq / targetFreq);
-        const percent = 50 + cents / 50 * 25;
-        $('tunerMeter').style.width = Math.max(0, Math.min(100, percent)) + '%';
-        const absCents = Math.abs(cents);
-        let status = 'Toque uma nota';
-        let color = '#FF6D00';
-        if (absCents < 3) { status = '✅ AFINADO!'; color = '#76FF03'; }
-        else if (cents < 0) { status = '🔽 BAIXO ' + Math.round(absCents) + 'c'; color = '#FFD600'; }
-        else { status = '🔼 ALTO ' + Math.round(absCents) + 'c'; color = '#FF1744'; }
-        $('tunerStatus').textContent = status;
-        $('tunerMeter').style.background = color;
-    } else {
-        $('tunerMeter').style.width = '50%';
-        $('tunerStatus').textContent = 'Toque uma nota';
-        $('tunerMeter').style.background = '#FF6D00';
-    }
-}
-
-// Exportar para uso global
 window.initAudio = initAudio;
 window.togglePlay = togglePlay;
 window.toggleFx = toggleFx;
@@ -1132,70 +1191,4 @@ window.exportBackup = exportBackup;
 window.importBackup = importBackup;
 window.startRecording = startRecording;
 window.stopRecording = stopRecording;
-// ===== TUNER UI IMPROVEMENTS =====
-function updateTunerUI(freq, note) {
-    if (!state.tunerActive) return;
-    
-    const noteEl = document.getElementById('tunerNote');
-    const freqEl = document.getElementById('tunerFreq');
-    const meterEl = document.getElementById('tunerMeter');
-    const statusEl = document.getElementById('tunerStatus');
-    
-    if (!noteEl) return;
-    
-    noteEl.textContent = note || '--';
-    noteEl.style.color = note && note !== '--' ? '#00BCD4' : '#666';
-    
-    freqEl.textContent = (freq || 0).toFixed(1) + ' Hz';
-
-    // Calcular offset em cents
-    let targetFreq = 0;
-    if (state.tunerString >= 0 && state.tunerString < STRING_FREQS.length) {
-        targetFreq = STRING_FREQS[state.tunerString];
-    } else if (freq > 0) {
-        // Encontrar a corda mais próxima
-        let minDiff = Infinity;
-        STRING_FREQS.forEach((f, i) => {
-            const diff = Math.abs(freq - f);
-            if (diff < minDiff) { minDiff = diff; targetFreq = f; }
-        });
-    }
-    
-    if (targetFreq > 0 && freq > 0) {
-        const cents = 1200 * Math.log2(freq / targetFreq);
-        const percent = 50 + cents / 50 * 25;
-        meterEl.style.width = Math.max(0, Math.min(100, percent)) + '%';
-        
-        const absCents = Math.abs(cents);
-        let status = 'Toque uma nota';
-        let color = '#FF6D00';
-        if (absCents < 3) { 
-            status = '✅ AFINADO!'; 
-            color = '#76FF03'; 
-        } else if (cents < 0) { 
-            status = '🔽 BAIXO ' + Math.round(absCents) + 'c'; 
-            color = '#FFD600'; 
-        } else { 
-            status = '🔼 ALTO ' + Math.round(absCents) + 'c'; 
-            color = '#FF1744'; 
-        }
-        statusEl.textContent = status;
-        meterEl.style.background = color;
-    } else {
-        meterEl.style.width = '50%';
-        statusEl.textContent = freq > 0 ? 'Detectando...' : 'Toque uma nota';
-        meterEl.style.background = '#FF6D00';
-    }
-}
-
-// Sobrescrever a função openTuner para melhorar
-const originalOpenTuner = window.openTuner;
-window.openTuner = function() {
-    originalOpenTuner();
-    // Reset UI
-    document.getElementById('tunerMeter').style.width = '50%';
-    document.getElementById('tunerMeter').style.background = '#FF6D00';
-    document.getElementById('tunerStatus').textContent = 'Toque uma nota';
-    document.getElementById('tunerNote').textContent = '--';
-    document.getElementById('tunerFreq').textContent = '0 Hz';
-};
+window.updateTunerUI = updateTunerUI;
