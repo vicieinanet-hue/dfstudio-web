@@ -1,4 +1,4 @@
-const CACHE = 'dfstudio-v4';
+const CACHE = 'dfstudio-v5';
 const ASSETS = ['/', '/index.html', '/app.js', '/audio-processor.js', '/manifest.json'];
 
 self.addEventListener('install', e => {
