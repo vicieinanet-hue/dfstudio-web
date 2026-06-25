@@ -1,13 +1,11 @@
 // ================================================================
-// DF STUDIO PRO - AUDIO WORKLET
-// Processamento de áudio em tempo real com baixa latência
+// DF STUDIO PRO - AUDIO WORKLET (LATÊNCIA ULTRA-BAIXA)
 // ================================================================
 
 class DfAudioProcessor extends AudioWorkletProcessor {
     constructor() {
         super();
 
-        // ===== ESTADO =====
         this.sampleRate = 48000;
 
         // Ganhos
@@ -24,7 +22,6 @@ class DfAudioProcessor extends AudioWorkletProcessor {
         this.playPan = 0;
         this.masterPan = 0;
 
-        // FX Master
         this.fxEnabled = true;
 
         // Efeitos
@@ -57,7 +54,7 @@ class DfAudioProcessor extends AudioWorkletProcessor {
         this.atDetune = 0;
         this.autoKeyEnabled = true;
 
-        // Estado do processador
+        // Buffers
         this.revBuf = new Float32Array(2048);
         this.revPtr = 0;
         this.delayBuf = new Float32Array(48000);
@@ -71,19 +68,23 @@ class DfAudioProcessor extends AudioWorkletProcessor {
         this.lpMid = 0;
         this.lpHig = 0;
 
-        // Pitch detection (simplificada)
-        this.pitchBuf = new Float32Array(2048);
+        // AutoTune buffers (menores para menos latência)
+        this.shiftBuf = new Float32Array(512);
+        this.shiftPos = 0;
+        this.shiftRead = 0;
+        this.smoothShift = 1;
+
+        // Pitch detection
+        this.pitchBuf = new Float32Array(1024);
         this.pitchPos = 0;
         this.detectedPitch = 0;
         this.detectedNote = '--';
         this.pitchCounter = 0;
 
-        // Tuner
         this.tunerActive = false;
-        this.tunerBuf = new Float32Array(4096);
+        this.tunerBuf = new Float32Array(2048);
         this.tunerPos = 0;
 
-        // Receiver de mensagens
         this.port.onmessage = this.handleMessage.bind(this);
     }
 
@@ -139,7 +140,6 @@ class DfAudioProcessor extends AudioWorkletProcessor {
                 else if (ch === 'master') this.masterPan = val;
                 break;
             case 'setBufferSize':
-                // Ajustar buffers se necessário
                 break;
             case 'startTuner':
                 this.tunerActive = true;
@@ -152,16 +152,14 @@ class DfAudioProcessor extends AudioWorkletProcessor {
         }
     }
 
-    // ===== DETECÇÃO DE PITCH =====
     detectPitch(buffer, size) {
         let energy = 0;
         for (let i = 0; i < size; i++) energy += buffer[i] * buffer[i];
         if (energy < 0.001) return 0;
 
-        // Autocorrelação
         const rms = Math.sqrt(energy / size);
-        const minLag = 40;
-        const maxLag = 800;
+        const minLag = 30;
+        const maxLag = 600;
         let bestCorr = -1;
         let bestLag = minLag;
 
@@ -197,192 +195,7 @@ class DfAudioProcessor extends AudioWorkletProcessor {
         return notes[((note % 12) + 12) % 12];
     }
 
-    // ===== AUTO-TUNE (SIMPLIFICADO) =====
-    processAutotune(input) {
-        if (!this.atEnabled) return input;
-
-        // Pitch detection simplificada
-        this.pitchBuf[this.pitchPos] = input;
-        this.pitchPos = (this.pitchPos + 1) % 2048;
-
-        this.pitchCounter++;
-        if (this.pitchCounter >= 512) {
-            this.pitchCounter = 0;
-            const pitch = this.detectPitch(this.pitchBuf, 2048);
-            if (pitch > 0) {
-                this.detectedPitch = pitch;
-                this.detectedNote = this.freqToNote(pitch);
-                // Enviar para UI
-                this.port.postMessage({
-                    type: 'pitchDetected',
-                    frequency: pitch,
-                    note: this.detectedNote
-                });
-            }
-        }
-
-        if (this.detectedPitch < 60 || this.detectedPitch > 1200) return input;
-
-        // Mapear para nota alvo
-        const noteMap = {
-            'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4,
-            'F': 5, 'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
-        };
-        const targetNote = noteMap[this.atKey] || 0;
-        const mode = this.atMode;
-
-        const midi = 69 + 12 * Math.log2(this.detectedPitch / 440);
-        let targetMidi = Math.round(midi);
-
-        // Ajustar para a escala
-        const scale = mode === 'MAIOR' ? [0,2,4,5,7,9,11] :
-                      mode === 'MENOR' ? [0,2,3,5,7,8,10] :
-                      [0,1,2,3,4,5,6,7,8,9,10,11]; // CROM
-
-        let bestDist = 999;
-        let bestNote = targetMidi;
-        for (let oct = -2; oct <= 2; oct++) {
-            for (const s of scale) {
-                const candidate = targetNote + oct * 12 + s;
-                const dist = Math.abs(candidate - targetMidi);
-                if (dist < bestDist) {
-                    bestDist = dist;
-                    bestNote = candidate;
-                }
-            }
-        }
-
-        const targetFreq = 440 * Math.pow(2, (bestNote - 69) / 12);
-        const shift = targetFreq / this.detectedPitch;
-
-        const amount = Math.min(1, Math.max(0, this.atAmount));
-        const speed = Math.max(1, this.atSpeed);
-
-        // Aplicar shift suavemente (sem buffer para baixa latência)
-        // Usamos um filtro de primeira ordem para suavizar
-        const coeff = 1 - Math.exp(-1 / (speed * 0.001 * this.sampleRate));
-        this.smoothShift = this.smoothShift || 1;
-        this.smoothShift += (shift - this.smoothShift) * coeff;
-
-        // Aplicar formante e detune
-        let finalShift = this.smoothShift;
-        if (this.atFormant !== 0) {
-            finalShift *= Math.pow(2, this.atFormant / 12);
-        }
-        if (this.atDetune !== 0) {
-            finalShift *= Math.pow(2, this.atDetune / 1200);
-        }
-
-        // Limitar para evitar artefatos
-        finalShift = Math.max(0.5, Math.min(2, finalShift));
-
-        // Shift simples (sem delay) - apenas multiplicação
-        // Para um shift mais realista, precisaríamos de um buffer, mas isso adiciona latência
-        // Usamos um compromisso: shift com interpolação linear em buffer pequeno
-        if (Math.abs(finalShift - 1) < 0.005) return input;
-
-        // Buffer circular para pitch shift
-        this.shiftBuf = this.shiftBuf || new Float32Array(1024);
-        this.shiftPos = this.shiftPos || 0;
-        this.shiftRead = this.shiftRead || 0;
-
-        this.shiftBuf[this.shiftPos] = input;
-        this.shiftPos = (this.shiftPos + 1) % 1024;
-
-        this.shiftRead += finalShift;
-        while (this.shiftRead >= 1024) this.shiftRead -= 1024;
-        while (this.shiftRead < 0) this.shiftRead += 1024;
-
-        const idx0 = Math.floor(this.shiftRead);
-        const frac = this.shiftRead - idx0;
-        const idx1 = (idx0 + 1) % 1024;
-        const shifted = this.shiftBuf[idx0] * (1 - frac) + this.shiftBuf[idx1] * frac;
-
-        // Mix
-        return input * (1 - amount * 0.7) + shifted * amount * 0.7;
-    }
-
-    // ===== EF EITOS =====
-    processReverb(input) {
-        if (!this.reverbEnabled) return input;
-        const rv = this.revBuf[this.revPtr];
-        this.revBuf[this.revPtr] = input + rv * 0.4;
-        this.revPtr = (this.revPtr + 1) % 2048;
-        return input * (1 - this.reverbMix) + rv * this.reverbMix;
-    }
-
-    processDelay(input) {
-        if (!this.delayEnabled) return input;
-        const delaySamples = Math.floor(this.delayTimeMs * this.sampleRate / 1000);
-        const dPtr = (this.delayPtr - delaySamples + 48000) % 48000;
-        const ds = this.delayBuf[dPtr];
-        this.delayBuf[this.delayPtr] = input + ds * this.delayFb * 0.5;
-        this.delayPtr = (this.delayPtr + 1) % 48000;
-        return input * (1 - this.delayMix) + ds * this.delayMix;
-    }
-
-    processChorus(input) {
-        if (!this.chorusEnabled) return input;
-        this.chorusBuf[this.chorusWritePtr] = input;
-        this.chorusWritePtr = (this.chorusWritePtr + 1) % 512;
-        this.chorusPhase += this.chorusRate * 6.283 / this.sampleRate;
-        if (this.chorusPhase > 6.283) this.chorusPhase -= 6.283;
-        const maxDelay = 256;
-        const modDelay = (Math.sin(this.chorusPhase) * 0.5 + 0.5) * maxDelay;
-        const dInt = Math.floor(modDelay);
-        const frac = modDelay - dInt;
-        const rp = (this.chorusWritePtr - dInt - 1 + 512) % 512;
-        const rp2 = (rp - 1 + 512) % 512;
-        const delayed = this.chorusBuf[rp] * (1 - frac) + this.chorusBuf[rp2] * frac;
-        return input * (1 - this.chorusMix) + delayed * this.chorusMix;
-    }
-
-    processEQ(input) {
-        if (!this.eqEnabled) return input;
-        // Filtros de primeira ordem
-        const lowGain = Math.pow(10, this.eqLow / 20);
-        const midGain = Math.pow(10, this.eqMid / 20);
-        const highGain = Math.pow(10, this.eqHigh / 20);
-
-        // Low-pass (simples)
-        this.lpLow = 0.05 * input + 0.95 * this.lpLow;
-        const low = this.lpLow;
-
-        // Mid (band-pass simplificado)
-        this.lpMid = 0.05 * input + 0.95 * this.lpMid;
-        const mid = this.lpMid - low;
-
-        // High
-        this.lpHig = 0.05 * input + 0.95 * this.lpHig;
-        const high = input - this.lpHig;
-
-        return low * lowGain + mid * midGain + high * highGain;
-    }
-
-    processCompressor(input) {
-        if (!this.compEnabled) return input;
-        const thresh = Math.pow(10, this.compThresh / 20);
-        const ratio = this.compRatio;
-        const level = Math.abs(input);
-        let targetGain = 1;
-        if (level > thresh) {
-            targetGain = Math.pow(thresh / level, 1 / ratio);
-        }
-        // Attack/release simples
-        const coeff = 0.01;
-        this.compGain = this.compGain * coeff + targetGain * (1 - coeff);
-        return input * this.compGain;
-    }
-
-    processGate(input) {
-        if (!this.gateEnabled) return input;
-        const thresh = Math.pow(10, this.gateThresh / 20);
-        const level = Math.abs(input);
-        this.gateEnv = level > thresh ? this.gateEnv * 0.9 + 0.1 : this.gateEnv * 0.999;
-        return input * Math.min(1, this.gateEnv * 3);
-    }
-
-    // ===== PROCESS PRINCIPAL =====
+    // ===== PROCESS PRINCIPAL OTIMIZADO =====
     process(inputs, outputs, parameters) {
         const input = inputs[0];
         const output = outputs[0];
@@ -396,64 +209,248 @@ class DfAudioProcessor extends AudioWorkletProcessor {
         if (!inCh || !outL) return true;
 
         const size = inCh.length;
+        
+        // Cache de variáveis para acesso rápido
+        const fxEnabled = this.fxEnabled;
+        const micGain = this.micGain;
+        const micMute = this.micMute;
+        const monGain = this.monGain;
+        const monitorEnabled = this.monitorEnabled;
+        const masterGain = this.masterGain;
+        const masterMute = this.masterMute;
+        const micPan = this.micPan;
+        const masterPan = this.masterPan;
+        
+        const reverbEnabled = this.reverbEnabled;
+        const reverbMix = this.reverbMix;
+        const delayEnabled = this.delayEnabled;
+        const delayMix = this.delayMix;
+        const delayTimeMs = this.delayTimeMs;
+        const delayFb = this.delayFb;
+        const chorusEnabled = this.chorusEnabled;
+        const chorusMix = this.chorusMix;
+        const chorusRate = this.chorusRate;
+        const eqEnabled = this.eqEnabled;
+        const eqLow = this.eqLow;
+        const eqMid = this.eqMid;
+        const eqHigh = this.eqHigh;
+        const compEnabled = this.compEnabled;
+        const compRatio = this.compRatio;
+        const compThresh = this.compThresh;
+        const gateEnabled = this.gateEnabled;
+        const gateThresh = this.gateThresh;
+        const atEnabled = this.atEnabled;
+        
+        const sampleRate = this.sampleRate;
+        const delaySamples = Math.floor(delayTimeMs * sampleRate / 1000);
+        const delayBufSize = 48000;
+        const revBufSize = 2048;
+        const chorusBufSize = 512;
+        const maxChDelay = Math.min(Math.floor(sampleRate / 60), chorusBufSize - 2);
+        
+        let revPtr = this.revPtr;
+        let delayPtr = this.delayPtr;
+        let chorusWritePtr = this.chorusWritePtr;
+        let chorusPhase = this.chorusPhase;
+        let gateEnv = this.gateEnv;
+        let compGain = this.compGain;
+        let lpLow = this.lpLow;
+        let lpMid = this.lpMid;
+        let lpHig = this.lpHig;
+        let smoothShift = this.smoothShift || 1;
+        let shiftPos = this.shiftPos || 0;
+        let shiftRead = this.shiftRead || 0;
+        
+        const revBuf = this.revBuf;
+        const delayBuf = this.delayBuf;
+        const chorusBuf = this.chorusBuf;
+        const shiftBuf = this.shiftBuf;
 
+        // Loop principal otimizado
         for (let i = 0; i < size; i++) {
             let sample = inCh[i] || 0;
 
-            // Ganho do microfone
-            let voice = sample * this.micGain * (this.micMute ? 0 : 1);
+            let voice = sample * micGain * (micMute ? 0 : 1);
 
-            // FX Chain
-            if (this.fxEnabled) {
-                voice = this.processGate(voice);
-                voice = this.processCompressor(voice);
-                voice = this.processEQ(voice);
-                voice = this.processChorus(voice);
-                voice = this.processDelay(voice);
-                voice = this.processReverb(voice);
-                voice = this.processAutotune(voice);
+            if (fxEnabled) {
+                // Noise Gate
+                if (gateEnabled) {
+                    const thresh = Math.pow(10, gateThresh / 20);
+                    const level = Math.abs(voice);
+                    gateEnv = level > thresh ? gateEnv * 0.9 + 0.1 : gateEnv * 0.999;
+                    voice *= Math.min(1, gateEnv * 3);
+                }
+
+                // Compressor
+                if (compEnabled) {
+                    const thresh = Math.pow(10, compThresh / 20);
+                    const level = Math.abs(voice);
+                    let targetGain = 1;
+                    if (level > thresh) {
+                        targetGain = Math.pow(thresh / level, 1 / compRatio);
+                    }
+                    const coeff = 0.01;
+                    compGain = compGain * coeff + targetGain * (1 - coeff);
+                    voice *= compGain;
+                }
+
+                // EQ
+                if (eqEnabled) {
+                    const lowGain = Math.pow(10, eqLow / 20);
+                    const midGain = Math.pow(10, eqMid / 20);
+                    const highGain = Math.pow(10, eqHigh / 20);
+                    
+                    lpLow = 0.05 * voice + 0.95 * lpLow;
+                    const low = lpLow;
+                    lpMid = 0.05 * voice + 0.95 * lpMid;
+                    const mid = lpMid - low;
+                    lpHig = 0.05 * voice + 0.95 * lpHig;
+                    const high = voice - lpHig;
+                    
+                    voice = low * lowGain + mid * midGain + high * highGain;
+                }
+
+                // Chorus
+                if (chorusEnabled) {
+                    chorusBuf[chorusWritePtr] = voice;
+                    chorusWritePtr = (chorusWritePtr + 1) % chorusBufSize;
+                    chorusPhase += chorusRate * 6.283 / sampleRate;
+                    if (chorusPhase > 6.283) chorusPhase -= 6.283;
+                    const modDelay = (Math.sin(chorusPhase) * 0.5 + 0.5) * maxChDelay;
+                    const dInt = Math.floor(modDelay);
+                    const frac = modDelay - dInt;
+                    let rp = (chorusWritePtr - dInt - 1 + chorusBufSize) % chorusBufSize;
+                    let rp2 = (rp - 1 + chorusBufSize) % chorusBufSize;
+                    const delayed = chorusBuf[rp] * (1 - frac) + chorusBuf[rp2] * frac;
+                    voice = voice * (1 - chorusMix) + delayed * chorusMix;
+                }
+
+                // Delay
+                if (delayEnabled && delaySamples > 0 && delaySamples < delayBufSize) {
+                    const dPtr = (delayPtr - delaySamples + delayBufSize) % delayBufSize;
+                    const ds = delayBuf[dPtr];
+                    delayBuf[delayPtr] = voice + ds * delayFb * 0.5;
+                    delayPtr = (delayPtr + 1) % delayBufSize;
+                    voice = voice * (1 - delayMix) + ds * delayMix;
+                }
+
+                // Reverb
+                if (reverbEnabled) {
+                    const rv = revBuf[revPtr];
+                    revBuf[revPtr] = voice + rv * 0.4;
+                    revPtr = (revPtr + 1) % revBufSize;
+                    voice = voice * (1 - reverbMix) + rv * reverbMix;
+                }
+
+                // AutoTune
+                if (atEnabled) {
+                    // Pitch shift com buffer de 512 amostras (~10ms)
+                    shiftBuf[shiftPos] = voice;
+                    shiftPos = (shiftPos + 1) % 512;
+                    
+                    // Detecção de pitch simplificada
+                    this.pitchBuf[this.pitchPos] = voice;
+                    this.pitchPos = (this.pitchPos + 1) % 1024;
+                    this.pitchCounter++;
+                    if (this.pitchCounter >= 256) {
+                        this.pitchCounter = 0;
+                        const pitch = this.detectPitch(this.pitchBuf, 1024);
+                        if (pitch > 0) {
+                            this.detectedPitch = pitch;
+                            this.detectedNote = this.freqToNote(pitch);
+                            this.port.postMessage({
+                                type: 'pitchDetected',
+                                frequency: pitch,
+                                note: this.detectedNote
+                            });
+                        }
+                    }
+
+                    // Aplicar pitch shift
+                    let targetShift = 1.0;
+                    if (this.detectedPitch > 60 && this.detectedPitch < 1200) {
+                        const noteMap = {
+                            'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4,
+                            'F': 5, 'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+                        };
+                        const targetNote = noteMap[this.atKey] || 0;
+                        const mode = this.atMode;
+                        
+                        const midi = 69 + 12 * Math.log2(this.detectedPitch / 440);
+                        let targetMidi = Math.round(midi);
+                        
+                        const scale = mode === 'MAIOR' ? [0,2,4,5,7,9,11] :
+                                      mode === 'MENOR' ? [0,2,3,5,7,8,10] :
+                                      [0,1,2,3,4,5,6,7,8,9,10,11];
+                        
+                        let bestDist = 999;
+                        let bestNote = targetMidi;
+                        for (let oct = -2; oct <= 2; oct++) {
+                            for (const s of scale) {
+                                const candidate = targetNote + oct * 12 + s;
+                                const dist = Math.abs(candidate - targetMidi);
+                                if (dist < bestDist) {
+                                    bestDist = dist;
+                                    bestNote = candidate;
+                                }
+                            }
+                        }
+                        
+                        const targetFreq = 440 * Math.pow(2, (bestNote - 69) / 12);
+                        targetShift = targetFreq / this.detectedPitch;
+                    }
+                    
+                    const amount = Math.min(1, Math.max(0, this.atAmount || 0.65));
+                    const speed = Math.max(1, this.atSpeed || 14);
+                    const coeffShift = 1 - Math.exp(-1 / (speed * 0.001 * sampleRate));
+                    smoothShift += (targetShift - smoothShift) * coeffShift;
+                    
+                    shiftRead += smoothShift;
+                    while (shiftRead >= 512) shiftRead -= 512;
+                    while (shiftRead < 0) shiftRead += 512;
+                    
+                    const idx0 = Math.floor(shiftRead);
+                    const frac = shiftRead - idx0;
+                    const idx1 = (idx0 + 1) % 512;
+                    const shifted = shiftBuf[idx0] * (1 - frac) + shiftBuf[idx1] * frac;
+                    
+                    voice = voice * (1 - amount * 0.7) + shifted * amount * 0.7;
+                }
             }
 
             // PAN
-            const micPan = this.micPan;
             const voiceL = voice * (1 - micPan) * 0.707;
             const voiceR = voice * (1 + micPan) * 0.707;
-
-            // PLAYBACK (simulado - será substituído por áudio externo)
-            // Na prática, o playback vem do pushExternalAudio
+            
             let playL = 0, playR = 0;
-            // TODO: receber áudio do playback
 
-            // Play PAN
-            const playPan = this.playPan;
-            playL *= (1 - playPan) * 0.707 * this.playGain * (this.playMute ? 0 : 1);
-            playR *= (1 + playPan) * 0.707 * this.playGain * (this.playMute ? 0 : 1);
+            const mon = monitorEnabled ? voice * monGain : 0;
 
-            if (this.playMono) {
-                const mono = (playL + playR) * 0.5;
-                playL = mono;
-                playR = mono;
-            }
+            let mixL = (mon + playL) * masterGain * (masterMute ? 0 : 1);
+            let mixR = (mon + playR) * masterGain * (masterMute ? 0 : 1);
 
-            // Monitor
-            const mon = this.monitorEnabled ? voice * this.monGain : 0;
-
-            // Mix
-            let mixL = (mon + playL) * this.masterGain * (this.masterMute ? 0 : 1);
-            let mixR = (mon + playR) * this.masterGain * (this.masterMute ? 0 : 1);
-
-            // Master PAN
-            const masterPan = this.masterPan;
             mixL *= (1 - masterPan) * 0.707;
             mixR *= (1 + masterPan) * 0.707;
 
-            // Clipping suave
             mixL = Math.tanh(mixL * 0.92);
             mixR = Math.tanh(mixR * 0.92);
 
             outL[i] = mixL || 0;
             if (outR) outR[i] = mixR || 0;
         }
+
+        this.revPtr = revPtr;
+        this.delayPtr = delayPtr;
+        this.chorusWritePtr = chorusWritePtr;
+        this.chorusPhase = chorusPhase;
+        this.gateEnv = gateEnv;
+        this.compGain = compGain;
+        this.lpLow = lpLow;
+        this.lpMid = lpMid;
+        this.lpHig = lpHig;
+        this.smoothShift = smoothShift;
+        this.shiftPos = shiftPos;
+        this.shiftRead = shiftRead;
 
         return true;
     }
