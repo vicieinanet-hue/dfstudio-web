@@ -38,61 +38,62 @@
         .app{display:none;flex-direction:column;height:100%;width:100%}
 
         /* TOP BAR */
-        .topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:var(--surface);border-bottom:1px solid var(--border);min-height:32px;gap:4px}
+        .topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:var(--surface);border-bottom:1px solid var(--border);min-height:32px;gap:4px;flex-shrink:0}
         .topbar .devices{display:flex;gap:3px;flex:1}
-        .topbar .devices select{flex:1;background:var(--surfaceHigh);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:3px 4px;font-size:9px;max-width:45%}
+        .topbar .devices select{flex:1;background:var(--surfaceHigh);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:3px 4px;font-size:9px;max-width:48%}
         .topbar .stats{font-size:7px;color:var(--textSecondary);font-family:monospace;display:flex;gap:4px;white-space:nowrap}
         .topbar .stats span{color:var(--teal)}
 
         /* PLAYER */
-        .player{background:var(--surface);padding:4px 8px;border-bottom:1px solid var(--border)}
+        .player{background:var(--surface);padding:4px 8px;border-bottom:1px solid var(--border);flex-shrink:0}
         .player .info{display:flex;justify-content:space-between;align-items:center}
         .player .name{font-weight:700;font-size:10px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
         .player .badge{background:rgba(255,109,0,0.15);color:var(--orange);padding:1px 5px;border-radius:6px;font-size:8px;font-weight:700;margin-left:4px;white-space:nowrap}
-        .player .seek-wrap{position:relative;margin:2px 0}
-        .player input[type=range]{width:100%;height:3px;-webkit-appearance:none;background:#222;border-radius:2px;outline:none}
+        .player input[type=range]{width:100%;height:3px;-webkit-appearance:none;background:#222;border-radius:2px;outline:none;margin:2px 0}
         .player input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--teal);border-radius:50%}
         .player .time{display:flex;justify-content:space-between;font-size:8px;color:var(--textSecondary);font-family:monospace}
         .player .ctrls{display:flex;justify-content:space-evenly;align-items:center;margin-top:3px;gap:1px}
-        .player .ctrls button{background:none;border:1px solid #333;color:var(--textSecondary);border-radius:50%;width:28px;height:28px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
-        .player .ctrls .play-btn{width:34px;height:34px;border:2px solid var(--teal);color:var(--teal);background:rgba(0,188,212,0.12);font-size:16px}
+        .player .ctrls button{background:none;border:1px solid #333;color:var(--textSecondary);border-radius:50%;width:26px;height:26px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+        .player .ctrls .play-btn{width:32px;height:32px;border:2px solid var(--teal);color:var(--teal);background:rgba(0,188,212,0.12);font-size:14px}
         .player .ctrls .marker-btn{border-color:var(--orange);color:var(--orange)}
 
-        /* MIXER */
-        .mixer{display:flex;flex:1;gap:2px;padding:2px;min-height:0}
-        .channel{flex:1;background:var(--surface);border-radius:6px;display:flex;flex-direction:column;align-items:center;padding:4px 2px;border:2px solid #1A1A3A;gap:2px;min-width:0}
-        .channel.voice{border-color:var(--orange)}
-        .channel.play{border-color:var(--teal)}
-        .channel.master{border-color:var(--orange)}
-        .channel .ch-top{width:100%;height:2px;margin-bottom:1px}
-        .channel.voice .ch-top{background:var(--orange)}
-        .channel.play .ch-top{background:var(--teal)}
-        .channel.master .ch-top{background:var(--orange)}
-        .channel .ch-name{font-size:7px;font-weight:900;letter-spacing:.5px;margin-bottom:1px}
-        .voice .ch-name{color:var(--orange)}.play .ch-name{color:var(--teal)}.master .ch-name{color:var(--orange)}
+        /* SCROLL CONTAINER */
+        .scroll-container{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:3px}
+
+        /* CHANNEL STRIP - VERTICAL LAYOUT */
+        .channel-strip{display:flex;align-items:stretch;background:var(--surface);border-radius:8px;border:2px solid #1A1A3A;margin-bottom:3px;padding:5px;gap:4px;min-height:100px}
+        .channel-strip.voice{border-color:var(--orange)}
+        .channel-strip.play{border-color:var(--teal)}
+        .channel-strip.master{border-color:var(--orange)}
         
-        .knob-wrap{display:flex;flex-direction:column;align-items:center;gap:1px}
-        .knob-wrap label{font-size:5px;color:var(--textSecondary)}
-        .knob{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#1A1A3A;border:2px solid #333;cursor:pointer;outline:none;margin:1px 0}
+        .ch-left{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:40px;flex-shrink:0}
+        .ch-left .ch-icon{font-size:16px}
+        .ch-left .ch-name{font-size:7px;font-weight:900;letter-spacing:.5px;text-align:center}
+        .voice .ch-left .ch-name{color:var(--orange)}.play .ch-left .ch-name{color:var(--teal)}.master .ch-left .ch-name{color:var(--orange)}
         
+        .ch-knobs{display:flex;flex-direction:column;align-items:center;gap:2px;width:45px;flex-shrink:0}
+        .ch-knobs label{font-size:6px;color:var(--textSecondary)}
+        .knob{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#1A1A3A;border:2px solid #333;cursor:pointer;outline:none}
+        
+        .ch-center{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:0}
         .btn-row{display:flex;gap:1px;width:100%}
-        .btn-row button{flex:1;padding:3px 0;border-radius:3px;border:1px solid #333;background:var(--surfaceHigh);color:var(--textSecondary);font-size:7px;font-weight:700;cursor:pointer}
+        .btn-row button{flex:1;padding:4px 0;border-radius:3px;border:1px solid #333;background:var(--surfaceHigh);color:var(--textSecondary);font-size:7px;font-weight:700;cursor:pointer}
         .btn-row .active{background:rgba(255,109,0,0.2);color:var(--orange);border-color:var(--orange)}
         .btn-row .solo-active{background:rgba(118,255,3,0.15);color:#76FF03;border-color:#76FF03}
         .btn-row .mute-active{background:rgba(255,23,68,0.2);color:var(--warning);border-color:var(--warning)}
-        
-        .vu{width:75%;height:12px;background:#000;border-radius:1px;overflow:hidden;border:1px solid #1A1A3A}
+        .vu-row{display:flex;gap:3px;width:100%}
+        .vu{flex:1;height:10px;background:#000;border-radius:1px;overflow:hidden;border:1px solid #1A1A3A}
         .vu .fill{height:0%;background:linear-gradient(to top,#76FF03 60%,#FFD600 80%,var(--warning) 100%);transition:height .06s}
         
-        .fader-wrap{display:flex;flex-direction:column;align-items:center;flex:1;width:100%}
-        .fader-wrap label{font-size:6px;color:var(--textSecondary);margin-top:1px}
-        .fader{-webkit-appearance:slider-vertical;width:14px;flex:1;min-height:40px;background:#1A1A3A;outline:none;border-radius:3px}
+        .ch-right{display:flex;align-items:stretch;gap:3px;width:50px;flex-shrink:0}
+        .fader-col{display:flex;flex-direction:column;align-items:center;flex:1}
+        .fader-col label{font-size:5px;color:var(--textSecondary);margin-top:2px}
+        .fader{-webkit-appearance:slider-vertical;width:16px;flex:1;min-height:60px;background:#1A1A3A;outline:none;border-radius:3px}
         .fader::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:12px;background:#555;border-radius:2px;border:1px solid #777}
-        
-        .fader-scale{width:12px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;padding-bottom:10px}
-        .fader-scale span{font-size:5px;color:var(--textSecondary);font-family:monospace}
+        .fader-scale{display:flex;flex-direction:column;justify-content:space-between;padding:2px 0}
+        .fader-scale span{font-size:5px;color:var(--textSecondary);font-family:monospace;line-height:1}
 
-        .nav{display:flex;background:var(--surface);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom)}
+        .nav{display:flex;background:var(--surface);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);flex-shrink:0}
         .nav button{flex:1;padding:6px 0;background:none;border:none;color:var(--textSecondary);font-size:7px;font-weight:700;cursor:pointer;border-top:2px solid transparent;display:flex;flex-direction:column;align-items:center;gap:2px}
         .nav button span{font-size:14px}
         .nav .active{color:var(--orange);border-top-color:var(--orange)}
@@ -111,130 +112,89 @@
 </head>
 <body>
 
-<!-- SPLASH -->
 <div id="splash" class="splash">
-    <h1>🎤 DF STUDIO</h1>
-    <p>Estúdio Profissional</p>
-    <div class="loader"></div>
-    <div class="msg" id="msg">A iniciar motor de áudio...</div>
-    <div class="err" id="err"></div>
+    <h1>🎤 DF STUDIO</h1><p>Estúdio Profissional</p>
+    <div class="loader"></div><div class="msg" id="msg">A iniciar...</div><div class="err" id="err"></div>
     <button id="startBtn" onclick="start()">COMEÇAR</button>
 </div>
 
-<!-- APP -->
 <div id="app" class="app">
-
-    <!-- TOP BAR -->
     <div class="topbar">
         <div class="devices">
-            <select id="inputDevice"><option>🎤 Microfone</option></select>
-            <select id="outputDevice"><option>🔊 Saída</option></select>
+            <select><option>🎤 Microfone</option></select>
+            <select><option>🔊 Saída</option></select>
         </div>
-        <div class="stats">
-            <span id="sr">48k</span>|<span id="buf">128b</span>|LAT <span id="lat">0ms</span>|DSP <span id="dsp">0%</span>
-        </div>
-        <button style="background:none;border:1px solid var(--teal);color:var(--teal);padding:2px 5px;border-radius:3px;font-size:7px;font-weight:700;cursor:pointer;white-space:nowrap">AFINADOR</button>
+        <div class="stats"><span id="sr">48k</span>|<span id="buf">128b</span>|LAT <span id="lat">0ms</span>|DSP <span id="dsp">0%</span></div>
     </div>
 
-    <!-- PLAYER -->
     <div class="player">
-        <div class="info">
-            <div class="name" id="trackName">🎵 Nenhuma música carregada</div>
-            <div class="badge" id="markerBadge">0</div>
-        </div>
-        <div class="seek-wrap"><input type="range" id="seekBar" min="0" max="1000" value="0"></div>
+        <div class="info"><div class="name" id="trackName">🎵 Nenhuma música</div><div class="badge" id="markerBadge">0</div></div>
+        <input type="range" id="seekBar" min="0" max="1000" value="0">
         <div class="time"><span id="curTime">00:00</span><span id="durTime">00:00</span></div>
         <div class="ctrls">
-            <button onclick="prevTrack()">⏮</button>
             <button onclick="prevMarker()" class="marker-btn">⏪</button>
             <button id="playBtn" onclick="togglePlay()" class="play-btn">▶️</button>
             <button onclick="nextMarker()" class="marker-btn">⏩</button>
-            <button onclick="nextTrack()">⏭</button>
-            <button onclick="showMarkerDlg()" class="marker-btn">📍</button>
+            <button onclick="showMarkerDlg()">📍</button>
             <button onclick="document.getElementById('fileInput').click()">📁</button>
             <input type="file" id="fileInput" accept="audio/*" style="display:none" onchange="loadFile(event)">
             <button onclick="stopTrack()">⏹</button>
         </div>
     </div>
 
-    <!-- MIXER -->
-    <div class="mixer">
+    <div class="scroll-container">
+
         <!-- VOZ -->
-        <div class="channel voice">
-            <div class="ch-top"></div>
-            <div class="ch-name">🎤 VOZ</div>
-            <div class="knob-wrap"><label>GANHO</label><input type="range" id="micGain" class="knob" min="0" max="100" value="65"></div>
-            <div class="btn-row">
-                <button id="fxOn" class="active" onclick="toggleFx()">FX</button>
-                <button id="atOn" onclick="toggleAt()">AT</button>
+        <div class="channel-strip voice">
+            <div class="ch-left"><div class="ch-icon">🎤</div><div class="ch-name">VOZ</div></div>
+            <div class="ch-knobs"><label>GANHO</label><input type="range" id="micGain" class="knob" min="0" max="100" value="65"></div>
+            <div class="ch-center">
+                <div class="btn-row"><button id="fxOn" class="active" onclick="toggleFx()">FX</button><button id="atOn" onclick="toggleAt()">AT</button></div>
+                <div class="btn-row"><button onclick="setPan('voice',-1)">L</button><button class="active" onclick="setPan('voice',0)">C</button><button onclick="setPan('voice',1)">R</button></div>
+                <div class="btn-row"><button id="voiceSolo" onclick="toggleSolo('voice')">S</button><button id="voiceMute" class="mute-active" onclick="toggleMute('voice')">M</button></div>
+                <div class="vu"><div class="fill" id="voiceVu"></div></div>
             </div>
-            <div class="btn-row">
-                <button onclick="setPan('voice',-1)">L</button>
-                <button class="active" onclick="setPan('voice',0)">C</button>
-                <button onclick="setPan('voice',1)">R</button>
+            <div class="ch-right">
+                <div class="fader-col"><input type="range" id="voiceFader" class="fader" min="0" max="100" value="50" orient="vertical"><label>FADER</label></div>
+                <div class="fader-scale"><span>+12</span><span>+6</span><span>0</span><span>-12</span><span>-30</span><span>-∞</span></div>
             </div>
-            <div class="btn-row">
-                <button id="voiceSolo" onclick="toggleSolo('voice')">S</button>
-                <button id="voiceMute" class="mute-active" onclick="toggleMute('voice')">M</button>
-            </div>
-            <div class="vu"><div class="fill" id="voiceVu"></div></div>
-            <div class="fader-wrap">
-                <input type="range" id="voiceFader" class="fader" min="0" max="100" value="50" orient="vertical">
-                <label>FADER</label>
-            </div>
-            <div class="fader-scale"><span>+12</span><span>+6</span><span>0</span><span>-12</span><span>-30</span><span>-∞</span></div>
         </div>
 
         <!-- PLAY -->
-        <div class="channel play">
-            <div class="ch-top"></div>
-            <div class="ch-name">🎵 PLAY</div>
-            <div class="knob-wrap"><label>GANHO</label><input type="range" id="playGain" class="knob" min="0" max="100" value="40"></div>
-            <div class="btn-row"><button id="monoOn" onclick="toggleMono()">MONO</button></div>
-            <div class="btn-row">
-                <button onclick="setPan('play',-1)">L</button>
-                <button class="active" onclick="setPan('play',0)">C</button>
-                <button onclick="setPan('play',1)">R</button>
+        <div class="channel-strip play">
+            <div class="ch-left"><div class="ch-icon">🎵</div><div class="ch-name">PLAY</div></div>
+            <div class="ch-knobs"><label>GANHO</label><input type="range" id="playGain" class="knob" min="0" max="100" value="40"></div>
+            <div class="ch-center">
+                <div class="btn-row"><button id="monoOn" onclick="toggleMono()">MONO</button></div>
+                <div class="btn-row"><button onclick="setPan('play',-1)">L</button><button class="active" onclick="setPan('play',0)">C</button><button onclick="setPan('play',1)">R</button></div>
+                <div class="btn-row"><button id="playSolo" onclick="toggleSolo('play')">S</button><button id="playMute" class="mute-active" onclick="toggleMute('play')">M</button></div>
+                <div class="vu"><div class="fill" id="playVu"></div></div>
             </div>
-            <div class="btn-row">
-                <button id="playSolo" onclick="toggleSolo('play')">S</button>
-                <button id="playMute" class="mute-active" onclick="toggleMute('play')">M</button>
+            <div class="ch-right">
+                <div class="fader-col"><input type="range" id="playFader" class="fader" min="0" max="100" value="50" orient="vertical"><label>FADER</label></div>
+                <div class="fader-scale"><span>+12</span><span>+6</span><span>0</span><span>-12</span><span>-30</span><span>-∞</span></div>
             </div>
-            <div class="vu"><div class="fill" id="playVu"></div></div>
-            <div class="fader-wrap">
-                <input type="range" id="playFader" class="fader" min="0" max="100" value="50" orient="vertical">
-                <label>FADER</label>
-            </div>
-            <div class="fader-scale"><span>+12</span><span>+6</span><span>0</span><span>-12</span><span>-30</span><span>-∞</span></div>
         </div>
 
         <!-- MASTER -->
-        <div class="channel master">
-            <div class="ch-top"></div>
-            <div class="ch-name">🔊 MASTER</div>
-            <div class="knob-wrap"><label>MONITOR</label><input type="range" id="monGain" class="knob" min="0" max="100" value="50"></div>
-            <div class="btn-row"><button id="monSw" onclick="toggleMon()">MON SW</button></div>
-            <div style="font-size:6px;color:var(--textSecondary);margin:1px 0" id="monLabel">DIRECT MON</div>
-            <div class="btn-row">
-                <button onclick="setPan('master',-1)">L</button>
-                <button class="active" onclick="setPan('master',0)">C</button>
-                <button onclick="setPan('master',1)">R</button>
+        <div class="channel-strip master">
+            <div class="ch-left"><div class="ch-icon">🔊</div><div class="ch-name">MASTER</div></div>
+            <div class="ch-knobs"><label>MONITOR</label><input type="range" id="monGain" class="knob" min="0" max="100" value="50"></div>
+            <div class="ch-center">
+                <div class="btn-row"><button id="monSw" onclick="toggleMon()">MON SW</button></div>
+                <div style="font-size:6px;color:var(--textSecondary);text-align:center" id="monLabel">DIRECT MON</div>
+                <div class="btn-row"><button onclick="setPan('master',-1)">L</button><button class="active" onclick="setPan('master',0)">C</button><button onclick="setPan('master',1)">R</button></div>
+                <div class="btn-row"><button style="visibility:hidden">S</button><button id="masterMute" onclick="toggleMute('master')">M</button></div>
+                <div class="vu-row"><div class="vu"><div class="fill" id="masterVuL"></div></div><div class="vu"><div class="fill" id="masterVuR"></div></div></div>
             </div>
-            <div class="btn-row">
-                <button style="visibility:hidden">S</button>
-                <button id="masterMute" onclick="toggleMute('master')">M</button>
+            <div class="ch-right">
+                <div class="fader-col"><input type="range" id="masterFader" class="fader" min="0" max="100" value="50" orient="vertical"><label>FADER</label></div>
+                <div class="fader-scale"><span>+12</span><span>+6</span><span>0</span><span>-12</span><span>-30</span><span>-∞</span></div>
             </div>
-            <div class="vu"><div class="fill" id="masterVuL"></div></div>
-            <div class="vu"><div class="fill" id="masterVuR"></div></div>
-            <div class="fader-wrap">
-                <input type="range" id="masterFader" class="fader" min="0" max="100" value="50" orient="vertical">
-                <label>FADER</label>
-            </div>
-            <div class="fader-scale"><span>+12</span><span>+6</span><span>0</span><span>-12</span><span>-30</span><span>-∞</span></div>
         </div>
+
     </div>
 
-    <!-- NAV -->
     <div class="nav">
         <button class="active"><span>🎛️</span>MIXER</button>
         <button><span>🎚️</span>EFEITOS</button>
@@ -244,7 +204,6 @@
     </div>
 </div>
 
-<!-- MARKER DIALOG -->
 <div class="dlg" id="markerDlg">
     <div>
         <h3>📍 NOVO MARCADOR</h3>
@@ -266,13 +225,12 @@ var micGain=.65,playGain=.40,masterGain=.50,monGain=.50;
 var micMuted=true,playMuted=true,masterMuted=true,micSolo=false,playSolo=false,playMono=false,monOn=false;
 var vuData=new Uint8Array(128);
 
-function log(m){var e=document.getElementById('msg');if(e)e.textContent=m;console.log(m);}
+function log(m){var e=document.getElementById('msg');if(e)e.textContent=m;}
 function err(m){var e=document.getElementById('err');if(e)e.textContent=m;document.getElementById('startBtn').style.display='block';}
 
 async function start(){
     try{
         document.getElementById('startBtn').style.display='none';document.getElementById('err').textContent='';
-        log('Criando AudioContext...');
         ctx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});
         micG=ctx.createGain();micG.gain.value=0;playG=ctx.createGain();playG.gain.value=0;
         masterG=ctx.createGain();masterG.gain.value=0;monG=ctx.createGain();monG.gain.value=0;
@@ -282,13 +240,12 @@ async function start(){
         playG.connect(aPlay);aPlay.connect(masterG);
         masterG.connect(aMasterL);masterG.connect(aMasterR);
         aMasterL.connect(ctx.destination);aMasterR.connect(ctx.destination);
-        log('Microfone...');
-        try{var s=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});ctx.createMediaStreamSource(s).connect(micG);log('Microfone OK!');}catch(e){log('Microfone indisponivel');}
+        try{var s=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});ctx.createMediaStreamSource(s).connect(micG);}catch(e){}
         document.getElementById('sr').textContent=(ctx.sampleRate/1000).toFixed(1)+'k';
         masterMuted=false;masterG.gain.value=masterGain;document.getElementById('masterMute').classList.remove('mute-active');
         document.getElementById('splash').style.display='none';document.getElementById('app').style.display='flex';
-        loadMarkers();setInterval(loop,80);log('✅ PRONTO!');
-    }catch(e){log('ERRO: '+e.message);err('Toque para tentar');}
+        loadMarkers();setInterval(loop,80);
+    }catch(e){err('Toque para tentar');}
 }
 
 function loop(){
@@ -318,16 +275,14 @@ function toggleMute(ch){
 function toggleSolo(ch){if(ch==='voice')micSolo=!micSolo;else playSolo=!playSolo;var b=document.getElementById(ch==='voice'?'voiceSolo':'playSolo');if(b){var a=ch==='voice'?micSolo:playSolo;if(a)b.classList.add('solo-active');else b.classList.remove('solo-active');}}
 function toggleMono(){playMono=!playMono;var b=document.getElementById('monoOn');if(b){if(playMono)b.classList.add('active');else b.classList.remove('active');}}
 function toggleMon(){monOn=!monOn;setMon(monGain);var b=document.getElementById('monSw');if(b){if(monOn)b.classList.add('active');else b.classList.remove('active');}document.getElementById('monLabel').textContent=monOn?'RETORNO APP':'DIRECT MON';}
-function toggleFx(){var b=document.getElementById('fxOn');b.classList.toggle('active');}
-function toggleAt(){var b=document.getElementById('atOn');b.classList.toggle('active');}
-function setPan(ch,v){var btns=document.querySelectorAll('.'+ch+' .btn-row:nth-of-type(2) button');btns.forEach(function(b,i){b.classList.remove('active');if((v===-1&&i===0)||(v===0&&i===1)||(v===1&&i===2))b.classList.add('active');});}
+function toggleFx(){document.getElementById('fxOn').classList.toggle('active');}
+function toggleAt(){document.getElementById('atOn').classList.toggle('active');}
+function setPan(ch,v){var p=document.querySelector('.'+ch+' .btn-row:nth-of-type(2)');if(!p)return;var btns=p.querySelectorAll('button');btns.forEach(function(b,i){b.classList.remove('active');if((v===-1&&i===0)||(v===0&&i===1)||(v===1&&i===2))b.classList.add('active');});}
 
 function togglePlay(){if(playing){try{srcNode.stop();}catch(e){}playing=false;}else if(audioBuf){playFrom(pos);}document.getElementById('playBtn').textContent=playing?'⏸️':'▶️';}
 function stopTrack(){try{srcNode.stop();}catch(e){}playing=false;pos=0;document.getElementById('playBtn').textContent='▶️';}
-function prevTrack(){playFrom(0);}
-function nextTrack(){playFrom(0);}
 function playFrom(p){if(!audioBuf||!ctx)return;try{srcNode.stop();}catch(e){}srcNode=ctx.createBufferSource();srcNode.buffer=audioBuf;srcNode.connect(playG);srcNode.start(0,p||0);playing=true;pos=p||0;startTime=ctx.currentTime-(p||0);document.getElementById('playBtn').textContent='⏸️';}
-async function loadFile(e){var f=e.target.files[0];if(f){try{var b=await f.arrayBuffer();audioBuf=await ctx.decodeAudioData(b);document.getElementById('trackName').textContent='🎵 '+f.name.replace(/\.[^/.]+$/,'');document.getElementById('durTime').textContent=fm(audioBuf.duration);}catch(ex){log('Erro: '+ex.message);}}}
+async function loadFile(e){var f=e.target.files[0];if(f){try{var b=await f.arrayBuffer();audioBuf=await ctx.decodeAudioData(b);document.getElementById('trackName').textContent='🎵 '+f.name.replace(/\.[^/.]+$/,'');document.getElementById('durTime').textContent=fm(audioBuf.duration);}catch(ex){}}}
 
 function loadMarkers(){try{var s=localStorage.getItem('df_markers');if(s)markers=JSON.parse(s);updMarkerBadge();}catch(e){}}
 function saveMarkers(){try{localStorage.setItem('df_markers',JSON.stringify(markers));}catch(e){}}
