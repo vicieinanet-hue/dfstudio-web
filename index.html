@@ -5,309 +5,499 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0A0A1A">
+    <meta name="theme-color" content="#060610">
     <title>DF Studio Pro</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
-    <link rel="stylesheet" href="css/style.css">
     <style>
-        .start-btn { padding: 15px 50px; background: #FF6D00; color: #FFF; border: none; border-radius: 30px; font-size: 18px; font-weight: 700; cursor: pointer; margin-top: 20px; }
-        .error-msg { color: #FF1744; font-size: 12px; margin-top: 10px; text-align: center; max-width: 280px; }
-        .log-msg { color: #888; font-size: 10px; margin-top: 5px; text-align: center; }
+        :root {
+            --bg: #060610;
+            --surface: #0E0E24;
+            --surface2: #12122A;
+            --orange: #FF6D00;
+            --orangeDim: #BF4A00;
+            --teal: #00BCD4;
+            --tealDim: #008A9E;
+            --warning: #FF1744;
+            --green: #76FF03;
+            --text: #EEE;
+            --text2: #999;
+            --border: #2A2A4A;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* SPLASH */
+        .splash {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; background: var(--bg);
+        }
+        .splash-logo { font-size: 2em; font-weight: 900; color: var(--orange); }
+        .splash-sub { color: var(--text2); margin: 8px 0 20px; font-size: 0.9em; }
+        .splash-loader { width: 36px; height: 36px; border: 3px solid #222; border-top-color: var(--orange); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .splash button {
+            padding: 14px 44px; background: var(--orange); color: #FFF; border: none;
+            border-radius: 25px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 16px;
+        }
+        .splash .log { color: var(--text2); font-size: 11px; margin-top: 8px; max-width: 260px; text-align: center; }
+        .splash .err { color: var(--warning); font-size: 11px; margin-top: 4px; }
+
+        /* APP */
+        .app { display: flex; flex-direction: column; height: 100vh; }
+        
+        /* TOP BAR */
+        .topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 10px; background: var(--surface); gap: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .topbar .title { font-weight: 900; color: var(--orange); font-size: 13px; letter-spacing: 1px; }
+        .topbar .stats { font-size: 9px; color: var(--text2); font-family: monospace; display: flex; gap: 8px; }
+        .topbar .stats span { color: var(--teal); }
+
+        /* PLAYER */
+        .player {
+            background: var(--surface); padding: 6px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .player .info { display: flex; justify-content: space-between; align-items: center; }
+        .player .info .name { font-weight: 700; font-size: 11px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .player .info .badge {
+            background: rgba(255,109,0,0.2); color: var(--orange); padding: 2px 7px;
+            border-radius: 8px; font-size: 9px; font-weight: 700; margin-left: 6px;
+        }
+        .player .seek { margin: 3px 0; position: relative; }
+        .player .seek input { width: 100%; height: 4px; -webkit-appearance: none; background: #222; border-radius: 2px; outline: none; }
+        .player .seek input::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--teal); border-radius: 50%; }
+        .player .time { display: flex; justify-content: space-between; font-size: 9px; color: var(--text2); font-family: monospace; }
+        .player .ctrls {
+            display: flex; justify-content: space-around; align-items: center; margin-top: 4px;
+        }
+        .player .ctrls button {
+            background: none; border: 1px solid #333; color: var(--text2); border-radius: 50%;
+            width: 28px; height: 28px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .player .ctrls .play-btn {
+            width: 36px; height: 36px; border: 2px solid var(--teal); color: var(--teal);
+            background: rgba(0,188,212,0.12); font-size: 16px;
+        }
+        .player .ctrls .marker-btn { border-color: var(--orange); color: var(--orange); }
+
+        /* MIXER */
+        .mixer { display: flex; flex: 1; gap: 3px; padding: 3px; }
+        .channel {
+            flex: 1; background: var(--surface); border-radius: 8px;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 5px 3px; border: 2px solid #1A1A3A; gap: 3px;
+        }
+        .channel.voice { border-color: var(--orange); }
+        .channel.play { border-color: var(--teal); }
+        .channel.master { border-color: var(--orange); }
+        .channel .ch-name { font-size: 8px; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 1px; }
+        .channel.voice .ch-name { color: var(--orange); }
+        .channel.play .ch-name { color: var(--teal); }
+        .channel.master .ch-name { color: var(--orange); }
+
+        .knob-wrap { display: flex; flex-direction: column; align-items: center; }
+        .knob-wrap label { font-size: 6px; color: var(--text2); margin-top: 1px; }
+        .knob {
+            -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%;
+            background: #1A1A3A; border: 2px solid #333; cursor: pointer; outline: none;
+        }
+        .knob::-webkit-slider-thumb { -webkit-appearance: none; width: 6px; height: 6px; background: var(--orange); border-radius: 50%; }
+
+        .btn-row { display: flex; gap: 2px; width: 100%; }
+        .btn-row button {
+            flex: 1; padding: 3px 1px; border-radius: 3px; border: 1px solid #333;
+            background: var(--surface2); color: var(--text2); font-size: 7px; font-weight: 700; cursor: pointer;
+        }
+        .btn-row .active { background: rgba(255,109,0,0.2); color: var(--orange); border-color: var(--orange); }
+
+        .vu {
+            width: 80%; height: 14px; background: #000; border-radius: 2px; overflow: hidden;
+            border: 1px solid #1A1A3A;
+        }
+        .vu .fill { height: 0%; background: linear-gradient(to top, var(--green) 60%, #FFD600 80%, var(--warning) 100%); transition: height 0.08s; }
+
+        .fader-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .fader-wrap label { font-size: 6px; color: var(--text2); margin-top: 2px; }
+        .fader {
+            -webkit-appearance: slider-vertical; width: 16px; flex: 1; min-height: 50px;
+            background: #1A1A3A; outline: none; border-radius: 3px;
+        }
+        .fader::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 14px; background: #555; border-radius: 3px; border: 1px solid #777; }
+
+        /* DIALOG */
+        .dialog {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 100;
+        }
+        .dialog .dlg {
+            background: var(--surface); padding: 20px; border-radius: 12px;
+            width: 90%; max-width: 320px; display: flex; flex-direction: column; gap: 10px;
+            border: 1px solid var(--border);
+        }
+        .dialog .dlg h3 { color: var(--orange); text-align: center; font-size: 16px; }
+        .dialog .dlg input { padding: 8px; border-radius: 6px; border: 1px solid #333; background: var(--bg); color: var(--text); font-size: 14px; }
+        .dialog .dlg button { padding: 10px; border-radius: 6px; border: none; font-weight: 700; cursor: pointer; font-size: 13px; }
+        .dialog .dlg .btn-save { background: var(--orange); color: #FFF; }
+        .dialog .dlg .btn-cancel { background: #333; color: var(--text2); }
+        .dialog .dlg .time-inputs { display: flex; gap: 4px; align-items: center; }
+        .dialog .dlg .time-inputs input { width: 48px; text-align: center; }
+        .dialog .dlg .time-inputs span { color: var(--text2); font-weight: 700; }
     </style>
 </head>
 <body>
-    <div id="splash" class="splash">
-        <div class="splash-logo">🎤 DF STUDIO</div>
-        <div class="splash-sub">Estúdio Profissional</div>
-        <div id="logMsg" class="log-msg"></div>
-        <div id="errorMsg" class="error-msg"></div>
-        <button id="startBtn" class="start-btn" style="display:none" onclick="initAudio()">COMEÇAR</button>
+
+<!-- SPLASH -->
+<div id="splash" class="splash">
+    <div class="splash-logo">🎤 DF STUDIO</div>
+    <div class="splash-sub">Estúdio Profissional</div>
+    <div class="splash-loader" id="splashLoader"></div>
+    <div class="log" id="logMsg"></div>
+    <div class="err" id="errorMsg"></div>
+    <button id="startBtn" style="display:none" onclick="initAudio()">COMEÇAR</button>
+</div>
+
+<!-- APP -->
+<div id="app" class="app" style="display:none">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="title">DF STUDIO BETA</div>
+        <div class="stats">
+            <span id="sampleRate">48k</span> |
+            <span id="bufferSize">128b</span> |
+            LAT <span id="latency">0ms</span> |
+            DSP <span id="cpuLoad">0%</span>
+        </div>
+        <button style="background:none;border:1px solid var(--teal);color:var(--teal);padding:3px 8px;border-radius:4px;font-size:9px;font-weight:700;cursor:pointer">🎸 AFINADOR</button>
     </div>
 
-    <div id="app" class="app" style="display:none">
-        <header class="top-bar">
-            <span style="font-weight:900;color:#FF6D00">DF STUDIO</span>
-            <span id="latency" style="font-size:10px;color:#888">--</span>
-        </header>
-        <div class="player-bar">
-            <div class="track-info"><span id="trackName">Nenhuma música</span><span id="markerCount">0</span></div>
-            <div class="progress-bar"><input type="range" id="seekBar" min="0" max="1000" value="0" class="seek-slider"></div>
-            <div class="time-display"><span id="currentTime">00:00</span><span id="durationTime">00:00</span></div>
-            <div class="player-controls">
-                <button onclick="prevMarker()" class="btn-icon" style="color:#FF6D00;border-color:#FF6D00">⏪</button>
-                <button id="playBtn" onclick="togglePlay()" class="btn-play">▶️</button>
-                <button onclick="nextMarker()" class="btn-icon" style="color:#FF6D00;border-color:#FF6D00">⏩</button>
-                <button onclick="showMarkerDialog()" class="btn-icon">📍</button>
-                <button class="btn-icon" onclick="document.getElementById('fileInput').click()">📁</button>
-                <input type="file" id="fileInput" accept="audio/*" style="display:none" onchange="handleFileUpload(event)">
-                <button onclick="stopTrack()" class="btn-icon">⏹</button>
-            </div>
+    <!-- PLAYER -->
+    <div class="player">
+        <div class="info">
+            <div class="name" id="trackName">🎵 Nenhuma música carregada</div>
+            <div class="badge" id="markerCount">0 marc</div>
         </div>
-
-        <div class="mixer">
-            <div class="channel voice-channel">
-                <div class="channel-header">🎤 VOZ</div>
-                <input type="range" id="micGain" class="knob" min="0" max="100" value="65" orient="vertical" style="-webkit-appearance:slider-vertical;width:30px;height:60px">
-                <div style="display:flex;gap:3px;width:100%"><button id="fxBtn" class="btn-fx active">FX</button><button id="atBtn" class="btn-fx">AT</button></div>
-                <div style="display:flex;gap:3px;width:100%"><button class="btn-pan active">C</button></div>
-                <div style="display:flex;gap:3px;width:100%"><button class="btn-mute" onclick="toggleMute('voice')">M</button></div>
-                <div class="vu-meter"><div class="vu-fill" id="voiceVuFill"></div></div>
-                <input type="range" id="voiceFader" class="fader" min="0" max="100" value="50" orient="vertical" style="-webkit-appearance:slider-vertical;width:20px;flex:1;min-height:60px">
-            </div>
-            <div class="channel play-channel">
-                <div class="channel-header">🎵 PLAY</div>
-                <input type="range" id="playGain" class="knob" min="0" max="100" value="40" orient="vertical" style="-webkit-appearance:slider-vertical;width:30px;height:60px">
-                <button id="playMonoBtn" class="btn-mono" onclick="togglePlayMono()" style="width:100%">MONO</button>
-                <div style="display:flex;gap:3px;width:100%"><button class="btn-pan active">C</button></div>
-                <div style="display:flex;gap:3px;width:100%"><button class="btn-mute" onclick="toggleMute('play')">M</button></div>
-                <div class="vu-meter"><div class="vu-fill" id="playVuFill"></div></div>
-                <input type="range" id="playFader" class="fader" min="0" max="100" value="50" orient="vertical" style="-webkit-appearance:slider-vertical;width:20px;flex:1;min-height:60px">
-            </div>
-            <div class="channel master-channel">
-                <div class="channel-header">🔊 MASTER</div>
-                <button id="monitorBtn" class="btn-monitor" onclick="toggleMonitor()" style="width:100%">MON</button>
-                <div style="display:flex;gap:3px;width:100%"><button class="btn-pan active">C</button></div>
-                <div style="display:flex;gap:3px;width:100%"><button class="btn-mute" onclick="toggleMute('master')">M</button></div>
-                <div class="vu-meter"><div class="vu-fill" id="masterVuFill"></div></div>
-                <input type="range" id="masterFader" class="fader" min="0" max="100" value="50" orient="vertical" style="-webkit-appearance:slider-vertical;width:20px;flex:1;min-height:60px">
-            </div>
+        <div class="seek"><input type="range" id="seekBar" min="0" max="1000" value="0"></div>
+        <div class="time"><span id="currentTime">00:00</span><span id="durationTime">00:00</span></div>
+        <div class="ctrls">
+            <button onclick="prevTrack()">⏮</button>
+            <button onclick="prevMarker()" class="marker-btn">⏪</button>
+            <button id="playBtn" onclick="togglePlay()" class="play-btn">▶️</button>
+            <button onclick="nextMarker()" class="marker-btn">⏩</button>
+            <button onclick="nextTrack()">⏭</button>
+            <button onclick="showMarkerDialog()" class="marker-btn">📍</button>
+            <button onclick="document.getElementById('fileInput').click()">📁</button>
+            <input type="file" id="fileInput" accept="audio/*" style="display:none" onchange="handleFileUpload(event)">
+            <button onclick="stopTrack()">⏹</button>
         </div>
     </div>
 
-    <div id="markerDialog" class="dialog" style="display:none">
-        <div class="dialog-content">
-            <h3>Novo Marcador</h3>
-            <input type="text" id="markerName" placeholder="Nome do marcador">
-            <label><input type="checkbox" id="useCurrentTime" checked onchange="toggleManualTime()"> Usar tempo atual</label>
-            <div id="manualTime" style="display:none">
-                <input type="number" id="markerMin" placeholder="MIN" min="0" max="99" style="width:50px"> :
-                <input type="number" id="markerSec" placeholder="SEG" min="0" max="59" style="width:50px"> .
-                <input type="number" id="markerMs" placeholder="MS" min="0" max="999" style="width:60px">
+    <!-- MIXER -->
+    <div class="mixer">
+        <!-- VOZ -->
+        <div class="channel voice">
+            <div class="ch-name">🎤 VOZ</div>
+            <div class="knob-wrap"><label>GANHO</label><input type="range" id="micGain" class="knob" min="0" max="100" value="65"></div>
+            <div class="btn-row">
+                <button id="fxBtn" class="active" onclick="toggleFx()">FX</button>
+                <button id="atBtn" onclick="toggleAutotune()">AT</button>
             </div>
-            <button onclick="saveMarker()">SALVAR</button>
-            <button onclick="closeMarkerDialog()">CANCELAR</button>
+            <div class="btn-row">
+                <button onclick="setPan('voice',-1)">L</button>
+                <button class="active" onclick="setPan('voice',0)">C</button>
+                <button onclick="setPan('voice',1)">R</button>
+            </div>
+            <div class="btn-row">
+                <button id="voiceSolo" onclick="toggleSolo('voice')">S</button>
+                <button id="voiceMute" onclick="toggleMute('voice')">M</button>
+            </div>
+            <div class="vu"><div class="fill" id="voiceVuFill"></div></div>
+            <div class="fader-wrap"><input type="range" id="voiceFader" class="fader" min="0" max="100" value="50" orient="vertical"><label>FADER</label></div>
+        </div>
+
+        <!-- PLAY -->
+        <div class="channel play">
+            <div class="ch-name">🎵 PLAY</div>
+            <div class="knob-wrap"><label>GANHO</label><input type="range" id="playGain" class="knob" min="0" max="100" value="40"></div>
+            <div class="btn-row"><button id="playMonoBtn" onclick="togglePlayMono()">MONO</button></div>
+            <div class="btn-row">
+                <button onclick="setPan('play',-1)">L</button>
+                <button class="active" onclick="setPan('play',0)">C</button>
+                <button onclick="setPan('play',1)">R</button>
+            </div>
+            <div class="btn-row">
+                <button id="playSolo" onclick="toggleSolo('play')">S</button>
+                <button id="playMute" onclick="toggleMute('play')">M</button>
+            </div>
+            <div class="vu"><div class="fill" id="playVuFill"></div></div>
+            <div class="fader-wrap"><input type="range" id="playFader" class="fader" min="0" max="100" value="50" orient="vertical"><label>FADER</label></div>
+        </div>
+
+        <!-- MASTER -->
+        <div class="channel master">
+            <div class="ch-name">🔊 MASTER</div>
+            <div class="knob-wrap"><label>MONITOR</label><input type="range" id="monGain" class="knob" min="0" max="100" value="50"></div>
+            <div class="btn-row"><button id="monitorBtn" onclick="toggleMonitor()">MON SW</button></div>
+            <div class="btn-row">
+                <button onclick="setPan('master',-1)">L</button>
+                <button class="active" onclick="setPan('master',0)">C</button>
+                <button onclick="setPan('master',1)">R</button>
+            </div>
+            <div class="btn-row">
+                <button style="visibility:hidden">S</button>
+                <button id="masterMute" onclick="toggleMute('master')">M</button>
+            </div>
+            <div class="vu"><div class="fill" id="masterVuFill"></div></div>
+            <div class="fader-wrap"><input type="range" id="masterFader" class="fader" min="0" max="100" value="50" orient="vertical"><label>FADER</label></div>
         </div>
     </div>
 
-    <script>
-    // ═══════════════════════════════════════════════
-    // AUDIO ENGINE (inline)
-    // ═══════════════════════════════════════════════
-    var engine = {
-        audioCtx: null, sampleRate: 48000,
-        micGain: 0.65, playGain: 0.40, masterGain: 0.50,
-        isMicMuted: true, isPlayMuted: true, isMasterMuted: true,
-        isPlayMono: false,
-        audioBuffer: null, sourceNode: null, isPlaying: false,
-        playbackPosition: 0, markers: [], sourceStartTime: 0,
-        micGainNode: null, playGainNode: null, masterGainNode: null,
-        analyser: null, vuData: new Uint8Array(128),
+    <!-- BOTTOM NAV -->
+    <div style="display:flex;background:var(--surface);border-top:1px solid var(--border)">
+        <button class="nav-btn" style="flex:1;padding:8px;background:none;border:none;color:var(--orange);font-size:8px;font-weight:700;border-top:2px solid var(--orange)">🎛️ MIXER</button>
+        <button class="nav-btn" style="flex:1;padding:8px;background:none;border:none;color:var(--text2);font-size:8px;font-weight:700">🎚️ EFEITOS</button>
+        <button class="nav-btn" style="flex:1;padding:8px;background:none;border:none;color:var(--text2);font-size:8px;font-weight:700">🎤 ROBOT</button>
+        <button class="nav-btn" style="flex:1;padding:8px;background:none;border:none;color:var(--text2);font-size:8px;font-weight:700">📚 BIB</button>
+        <button class="nav-btn" style="flex:1;padding:8px;background:none;border:none;color:var(--text2);font-size:8px;font-weight:700">⚙️ CONFIG</button>
+    </div>
+</div>
 
-        init: async function() {
-            try {
-                logMsg('Criando AudioContext...');
-                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: this.sampleRate, latencyHint: 'interactive' });
-                this.sampleRate = this.audioCtx.sampleRate;
-                logMsg('SampleRate: ' + this.sampleRate);
-                
-                this.micGainNode = this.audioCtx.createGain(); this.micGainNode.gain.value = 0;
-                this.playGainNode = this.audioCtx.createGain(); this.playGainNode.gain.value = 0;
-                this.masterGainNode = this.audioCtx.createGain(); this.masterGainNode.gain.value = 0;
-                this.analyser = this.audioCtx.createAnalyser(); this.analyser.fftSize = 256;
-                
-                this.micGainNode.connect(this.analyser);
-                this.analyser.connect(this.masterGainNode);
-                this.playGainNode.connect(this.masterGainNode);
-                this.masterGainNode.connect(this.audioCtx.destination);
-                
-                logMsg('Tentando microfone...');
-                try {
-                    var stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
-                    var inputNode = this.audioCtx.createMediaStreamSource(stream);
-                    inputNode.connect(this.micGainNode);
-                    logMsg('Microfone OK!');
-                } catch(micErr) {
-                    logMsg('Microfone indisponivel: ' + micErr.message);
-                }
-                
-                logMsg('AudioEngine PRONTO!');
-                return true;
-            } catch(e) {
-                logMsg('ERRO: ' + e.message);
-                return false;
-            }
-        },
+<!-- MARKER DIALOG -->
+<div class="dialog" id="markerDialog">
+    <div class="dlg">
+        <h3>📍 NOVO MARCADOR</h3>
+        <input type="text" id="markerName" placeholder="Nome do marcador (ex: Refrão)">
+        <label style="font-size:11px;color:var(--text2)"><input type="checkbox" id="useCurrentTime" checked onchange="toggleManualTime()"> Usar tempo atual</label>
+        <div id="manualTime" style="display:none" class="time-inputs">
+            <input type="number" id="markerMin" placeholder="MIN" min="0" max="99"> <span>:</span>
+            <input type="number" id="markerSec" placeholder="SEG" min="0" max="59"> <span>.</span>
+            <input type="number" id="markerMs" placeholder="MS" min="0" max="999">
+        </div>
+        <div id="previewTime" style="color:var(--orange);font-size:18px;font-weight:900;text-align:center;font-family:monospace"></div>
+        <button class="btn-save" onclick="saveMarker()">💾 SALVAR</button>
+        <button class="btn-cancel" onclick="closeMarkerDialog()">CANCELAR</button>
+    </div>
+</div>
 
-        setMicGain: function(v) { this.micGain = v; if(this.micGainNode) this.micGainNode.gain.value = this.isMicMuted ? 0 : v * 4; },
-        setPlayGain: function(v) { this.playGain = v; if(this.playGainNode) this.playGainNode.gain.value = this.isPlayMuted ? 0 : v; },
-        setMasterGain: function(v) { this.masterGain = v; if(this.masterGainNode) this.masterGainNode.gain.value = this.isMasterMuted ? 0 : v; },
+<script>
+// ═══════════════════════════════════════════════
+// AUDIO ENGINE
+// ═══════════════════════════════════════════════
+var engine = {
+    audioCtx: null, sampleRate: 48000, bufferSize: 128,
+    micGain: 0.65, playGain: 0.40, masterGain: 0.50, monGain: 0.50,
+    isMicMuted: true, isPlayMuted: true, isMasterMuted: true,
+    isMicSolo: false, isPlaySolo: false, isPlayMono: false, monitorEnabled: false,
+    voicePan: 0, playPan: 0, masterPan: 0,
+    audioBuffer: null, sourceNode: null, isPlaying: false,
+    playbackPosition: 0, markers: [], sourceStartTime: 0,
+    micGainNode: null, playGainNode: null, masterGainNode: null, monGainNode: null,
+    analyserMic: null, analyserPlay: null, analyserMaster: null,
+    vuData: new Uint8Array(128),
 
-        toggleMute: function(ch) {
-            if(ch==='voice'){ this.isMicMuted=!this.isMicMuted; this.setMicGain(this.micGain); }
-            else if(ch==='play'){ this.isPlayMuted=!this.isPlayMuted; this.setPlayGain(this.playGain); }
-            else if(ch==='master'){ this.isMasterMuted=!this.isMasterMuted; this.setMasterGain(this.masterGain); }
-        },
-
-        togglePlayMono: function(){ this.isPlayMono = !this.isPlayMono; },
-        
-        getVu: function(){ 
-            if(this.analyser){ 
-                this.analyser.getByteTimeDomainData(this.vuData); 
-                var s=0; 
-                for(var i=0;i<this.vuData.length;i++) s+=Math.abs(this.vuData[i]-128); 
-                return s/this.vuData.length/128; 
-            } 
-            return 0; 
-        },
-
-        togglePlay: function(){
-            if(this.isPlaying){ try{this.sourceNode.stop();}catch(e){} this.isPlaying=false; }
-            else if(this.audioBuffer){ this.playFromPosition(this.playbackPosition); }
-        },
-
-        playFromPosition: function(pos){
-            if(!this.audioBuffer||!this.audioCtx) return;
-            try{this.sourceNode.stop();}catch(e){}
-            this.sourceNode = this.audioCtx.createBufferSource();
-            this.sourceNode.buffer = this.audioBuffer;
-            this.sourceNode.connect(this.playGainNode);
-            this.sourceNode.start(0, pos||0);
-            this.isPlaying = true; this.playbackPosition = pos||0;
-            this.sourceStartTime = this.audioCtx.currentTime - (pos||0);
-        },
-
-        loadAudioFile: async function(file){
-            try{ var b=await file.arrayBuffer(); this.audioBuffer=await this.audioCtx.decodeAudioData(b); return true; }
-            catch(e){ logMsg('Erro audio: '+e.message); return false; }
-        },
-
-        getCurrentTime: function(){ return this.audioCtx?this.audioCtx.currentTime:0; },
-        getDuration: function(){ return this.audioBuffer?this.audioBuffer.duration:0; }
-    };
-
-    // ═══════════════════════════════════════════════
-    // APP LOGIC
-    // ═══════════════════════════════════════════════
-    function logMsg(msg) {
-        console.log(msg);
-        var el = document.getElementById('logMsg');
-        if(el) el.textContent = msg;
-    }
-
-    function showError(msg) {
-        document.getElementById('errorMsg').textContent = msg;
-        document.getElementById('startBtn').style.display = 'block';
-    }
-
-    async function initAudio() {
+    init: async function() {
         try {
-            document.getElementById('startBtn').style.display = 'none';
-            document.getElementById('errorMsg').textContent = '';
-            logMsg('Iniciando...');
+            logMsg('Iniciando AudioContext...');
+            this.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: this.sampleRate, latencyHint: 'interactive' });
+            this.sampleRate = this.audioCtx.sampleRate;
+            this.bufferSize = 128;
             
-            var ok = await engine.init();
-            if (ok) {
-                document.getElementById('splash').style.display = 'none';
-                document.getElementById('app').style.display = 'flex';
-                engine.toggleMute('master');
-                engine.setMasterGain(0.5);
-                setInterval(updateUI, 100);
-            } else {
-                showError('Falha ao iniciar áudio. Toque para tentar novamente.');
-            }
-        } catch(err) {
-            showError('Erro: ' + err.message);
+            this.micGainNode = this.audioCtx.createGain(); this.micGainNode.gain.value = 0;
+            this.playGainNode = this.audioCtx.createGain(); this.playGainNode.gain.value = 0;
+            this.masterGainNode = this.audioCtx.createGain(); this.masterGainNode.gain.value = 0;
+            this.monGainNode = this.audioCtx.createGain(); this.monGainNode.gain.value = 0;
+            
+            this.analyserMic = this.audioCtx.createAnalyser(); this.analyserMic.fftSize = 256;
+            this.analyserPlay = this.audioCtx.createAnalyser(); this.analyserPlay.fftSize = 256;
+            this.analyserMaster = this.audioCtx.createAnalyser(); this.analyserMaster.fftSize = 256;
+            
+            this.micGainNode.connect(this.analyserMic);
+            this.analyserMic.connect(this.monGainNode);
+            this.monGainNode.connect(this.masterGainNode);
+            this.playGainNode.connect(this.analyserPlay);
+            this.analyserPlay.connect(this.masterGainNode);
+            this.masterGainNode.connect(this.analyserMaster);
+            this.analyserMaster.connect(this.audioCtx.destination);
+            
+            try {
+                var stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+                this.audioCtx.createMediaStreamSource(stream).connect(this.micGainNode);
+                logMsg('Microfone OK');
+            } catch(micErr) { logMsg('Microfone: ' + micErr.message); }
+            
+            document.getElementById('sampleRate').textContent = (this.sampleRate/1000).toFixed(1) + 'k';
+            document.getElementById('bufferSize').textContent = this.bufferSize + 'b';
+            
+            logMsg('AudioEngine PRONTO!');
+            return true;
+        } catch(e) { logMsg('ERRO: ' + e.message); return false; }
+    },
+
+    setMicGain: function(v) { this.micGain = v; if(this.micGainNode) this.micGainNode.gain.value = this.isMicMuted ? 0 : v * 4; },
+    setPlayGain: function(v) { this.playGain = v; if(this.playGainNode) this.playGainNode.gain.value = this.isPlayMuted ? 0 : v; },
+    setMasterGain: function(v) { this.masterGain = v; if(this.masterGainNode) this.masterGainNode.gain.value = this.isMasterMuted ? 0 : v; },
+    setMonGain: function(v) { this.monGain = v; if(this.monGainNode) this.monGainNode.gain.value = this.monitorEnabled ? v : 0; },
+
+    toggleMute: function(ch) {
+        if(ch==='voice'){ this.isMicMuted=!this.isMicMuted; this.setMicGain(this.micGain); return this.isMicMuted; }
+        else if(ch==='play'){ this.isPlayMuted=!this.isPlayMuted; this.setPlayGain(this.playGain); return this.isPlayMuted; }
+        else if(ch==='master'){ this.isMasterMuted=!this.isMasterMuted; this.setMasterGain(this.masterGain); return this.isMasterMuted; }
+    },
+    toggleSolo: function(ch) {
+        if(ch==='voice'){ this.isMicSolo=!this.isMicSolo; return this.isMicSolo; }
+        else if(ch==='play'){ this.isPlaySolo=!this.isPlaySolo; return this.isPlaySolo; }
+    },
+    togglePlayMono: function(){ this.isPlayMono=!this.isPlayMono; return this.isPlayMono; },
+    toggleMonitor: function(){ this.monitorEnabled=!this.monitorEnabled; this.setMonGain(this.monGain); return this.monitorEnabled; },
+
+    getVu: function(analyser){ 
+        if(!analyser) return 0;
+        analyser.getByteTimeDomainData(this.vuData); 
+        var s=0; for(var i=0;i<this.vuData.length;i++) s+=Math.abs(this.vuData[i]-128); 
+        return Math.min(1, s/this.vuData.length/128 * 1.5); 
+    },
+
+    togglePlay: function(){
+        if(this.isPlaying){ try{this.sourceNode.stop();}catch(e){} this.isPlaying=false; }
+        else if(this.audioBuffer){ this.playFromPosition(this.playbackPosition); }
+    },
+    playFromPosition: function(pos){
+        if(!this.audioBuffer||!this.audioCtx) return;
+        try{this.sourceNode.stop();}catch(e){}
+        this.sourceNode = this.audioCtx.createBufferSource();
+        this.sourceNode.buffer = this.audioBuffer;
+        this.sourceNode.connect(this.playGainNode);
+        this.sourceNode.start(0, pos||0);
+        this.isPlaying = true; this.playbackPosition = pos||0;
+        this.sourceStartTime = this.audioCtx.currentTime - (pos||0);
+    },
+    loadAudioFile: async function(file){
+        try{ var b=await file.arrayBuffer(); this.audioBuffer=await this.audioCtx.decodeAudioData(b); return true; }
+        catch(e){ logMsg('Erro: '+e.message); return false; }
+    },
+    getCurrentTime: function(){ return this.audioCtx?this.audioCtx.currentTime:0; },
+    getDuration: function(){ return this.audioBuffer?this.audioBuffer.duration:0; }
+};
+
+// ═══════════════════════════════════════════════
+// APP LOGIC
+// ═══════════════════════════════════════════════
+function logMsg(msg) { console.log(msg); var el=document.getElementById('logMsg'); if(el) el.textContent=msg; }
+function showError(msg) { document.getElementById('errorMsg').textContent=msg; document.getElementById('startBtn').style.display='block'; }
+
+async function initAudio() {
+    document.getElementById('startBtn').style.display='none';
+    document.getElementById('errorMsg').textContent='';
+    var ok = await engine.init();
+    if(ok) {
+        document.getElementById('splash').style.display='none';
+        document.getElementById('app').style.display='flex';
+        engine.toggleMute('master');
+        engine.setMasterGain(0.5);
+        setInterval(updateUI, 80);
+    } else { showError('Toque para tentar novamente'); }
+}
+
+function updateUI() {
+    if(!engine.audioCtx) return;
+    try {
+        document.getElementById('latency').textContent = Math.round(engine.audioCtx.baseLatency*1000)+'ms';
+        document.getElementById('voiceVuFill').style.height = (engine.getVu(engine.analyserMic)*100)+'%';
+        document.getElementById('playVuFill').style.height = (engine.getVu(engine.analyserPlay)*100)+'%';
+        document.getElementById('masterVuFill').style.height = (engine.getVu(engine.analyserMaster)*100)+'%';
+        if(engine.isPlaying && engine.audioBuffer) {
+            var ct = engine.audioCtx.currentTime - engine.sourceStartTime;
+            document.getElementById('currentTime').textContent = formatTime(ct);
+            document.getElementById('seekBar').value = (ct/engine.audioBuffer.duration)*1000||0;
         }
-    }
+    } catch(e) {}
+}
+function formatTime(s) { var m=Math.floor(s/60), sec=Math.floor(s%60); return m.toString().padStart(2,'0')+':'+sec.toString().padStart(2,'0'); }
 
-    function updateUI() {
-        if(!engine.audioCtx) return;
-        try {
-            document.getElementById('latency').textContent = Math.round(engine.audioCtx.baseLatency * 1000) + 'ms';
-            var vu = engine.getVu();
-            var fills = document.querySelectorAll('.vu-fill');
-            for(var i=0;i<fills.length;i++) fills[i].style.height = (vu*100)+'%';
-            if(engine.isPlaying && engine.audioBuffer) {
-                var ct = engine.audioCtx.currentTime - engine.sourceStartTime;
-                document.getElementById('currentTime').textContent = formatTime(ct);
-                document.getElementById('seekBar').value = (ct/engine.audioBuffer.duration)*1000||0;
-            }
-        } catch(e) {}
-    }
-
-    function formatTime(s) { 
-        var m=Math.floor(s/60), sec=Math.floor(s%60); 
-        return m.toString().padStart(2,'0')+':'+sec.toString().padStart(2,'0'); 
-    }
-
-    // Event Listeners
+// Eventos
+document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('startBtn').addEventListener('click', initAudio);
     document.getElementById('micGain').addEventListener('input', function(e){ engine.setMicGain(e.target.value/100); });
     document.getElementById('playGain').addEventListener('input', function(e){ engine.setPlayGain(e.target.value/100); });
     document.getElementById('masterFader').addEventListener('input', function(e){ engine.setMasterGain(e.target.value/100); });
     document.getElementById('voiceFader').addEventListener('input', function(e){ engine.setMicGain(e.target.value/100); });
+    document.getElementById('playFader').addEventListener('input', function(e){ engine.setPlayGain(e.target.value/100); });
+    document.getElementById('monGain').addEventListener('input', function(e){ engine.setMonGain(e.target.value/100); });
     document.getElementById('seekBar').addEventListener('input', function(e){ if(engine.audioBuffer) engine.playFromPosition((e.target.value/1000)*engine.audioBuffer.duration); });
+    
+    setTimeout(function() {
+        initAudio().catch(function() { showError('Toque no botão para iniciar'); });
+    }, 800);
+});
 
-    function togglePlay() { engine.togglePlay(); document.getElementById('playBtn').textContent = engine.isPlaying?'⏸️':'▶️'; }
-    function stopTrack() { try{engine.sourceNode.stop();}catch(e){} engine.isPlaying=false; engine.playbackPosition=0; document.getElementById('playBtn').textContent='▶️'; }
-    function toggleMute(ch) { engine.toggleMute(ch); }
-    function togglePlayMono() { engine.togglePlayMono(); document.getElementById('playMonoBtn').classList.toggle('active'); }
-    function toggleMonitor() { document.getElementById('monitorBtn').classList.toggle('active'); }
-    function toggleFx() { document.getElementById('fxBtn').classList.toggle('active'); }
-    function toggleAutotune() { document.getElementById('atBtn').classList.toggle('active'); }
+function togglePlay() { engine.togglePlay(); document.getElementById('playBtn').textContent = engine.isPlaying?'⏸️':'▶️'; }
+function stopTrack() { try{engine.sourceNode.stop();}catch(e){} engine.isPlaying=false; engine.playbackPosition=0; document.getElementById('playBtn').textContent='▶️'; }
+function prevTrack() { engine.playFromPosition(0); }
+function nextTrack() { engine.playFromPosition(0); }
 
-    function showMarkerDialog() { document.getElementById('markerDialog').style.display='flex'; }
-    function closeMarkerDialog() { document.getElementById('markerDialog').style.display='none'; }
-    function toggleManualTime() { document.getElementById('manualTime').style.display = document.getElementById('useCurrentTime').checked?'none':'block'; }
+function toggleMute(ch) {
+    var muted = engine.toggleMute(ch);
+    var btn = document.getElementById((ch==='voice'?'voiceMute':ch==='play'?'playMute':'masterMute'));
+    if(btn) { if(muted) btn.classList.add('active'); else btn.classList.remove('active'); }
+}
+function toggleSolo(ch) {
+    var solo = engine.toggleSolo(ch);
+    var btn = document.getElementById((ch==='voice'?'voiceSolo':'playSolo'));
+    if(btn) { if(solo) btn.classList.add('active'); else btn.classList.remove('active'); }
+}
+function togglePlayMono() { var mono=engine.togglePlayMono(); var btn=document.getElementById('playMonoBtn'); if(btn){if(mono)btn.classList.add('active');else btn.classList.remove('active');} }
+function toggleMonitor() { var mon=engine.toggleMonitor(); var btn=document.getElementById('monitorBtn'); if(btn){if(mon)btn.classList.add('active');else btn.classList.remove('active');} }
+function toggleFx() { document.getElementById('fxBtn').classList.toggle('active'); }
+function toggleAutotune() { document.getElementById('atBtn').classList.toggle('active'); }
+function setPan(ch, val) {
+    var btns = document.querySelectorAll('.'+ch+'-channel .btn-row button');
+}
 
-    function saveMarker() {
-        var name = document.getElementById('markerName').value || 'Marcador';
-        var timeUs;
-        if(document.getElementById('useCurrentTime').checked) { timeUs = engine.getCurrentTime()*1000000; }
-        else { var min=parseInt(document.getElementById('markerMin').value)||0; var sec=parseInt(document.getElementById('markerSec').value)||0; var ms=parseInt(document.getElementById('markerMs').value)||0; timeUs = (min*60+sec)*1000000 + ms*1000; }
-        engine.markers.push({name:name, timeUs:timeUs});
-        document.getElementById('markerCount').textContent = engine.markers.length;
-        closeMarkerDialog();
-    }
+function showMarkerDialog() { document.getElementById('markerDialog').style.display='flex'; }
+function closeMarkerDialog() { document.getElementById('markerDialog').style.display='none'; }
+function toggleManualTime() { document.getElementById('manualTime').style.display = document.getElementById('useCurrentTime').checked?'none':'flex'; }
+function saveMarker() {
+    var name = document.getElementById('markerName').value || 'Marcador';
+    var timeUs;
+    if(document.getElementById('useCurrentTime').checked) { timeUs = engine.getCurrentTime()*1000000; }
+    else { var min=parseInt(document.getElementById('markerMin').value)||0; var sec=parseInt(document.getElementById('markerSec').value)||0; var ms=parseInt(document.getElementById('markerMs').value)||0; timeUs = (min*60+sec)*1000000 + ms*1000; }
+    engine.markers.push({name:name, timeUs:timeUs});
+    document.getElementById('markerCount').textContent = engine.markers.length + ' marc';
+    closeMarkerDialog();
+}
+function prevMarker() {
+    if(!engine.markers.length) return;
+    var cur = engine.getCurrentTime()*1000000;
+    var sorted = engine.markers.slice().sort(function(a,b){return a.timeUs-b.timeUs;});
+    var prev = sorted.filter(function(m){return m.timeUs < cur-500000;}).pop() || sorted[sorted.length-1];
+    if(prev) engine.playFromPosition(prev.timeUs/1000000);
+}
+function nextMarker() {
+    if(!engine.markers.length) return;
+    var cur = engine.getCurrentTime()*1000000;
+    var sorted = engine.markers.slice().sort(function(a,b){return a.timeUs-b.timeUs;});
+    var next = sorted.find(function(m){return m.timeUs > cur+500000;}) || sorted[0];
+    if(next) engine.playFromPosition(next.timeUs/1000000);
+}
+async function handleFileUpload(event) {
+    var file = event.target.files[0];
+    if(file) { var ok = await engine.loadAudioFile(file); if(ok) { document.getElementById('trackName').textContent = '🎵 ' + file.name.replace(/\.[^/.]+$/,''); document.getElementById('durationTime').textContent = formatTime(engine.getDuration()); } }
+}
 
-    function prevMarker() {
-        if(!engine.markers.length) return;
-        var cur = engine.getCurrentTime()*1000000;
-        var sorted = engine.markers.slice().sort(function(a,b){return a.timeUs-b.timeUs;});
-        var prev = sorted.filter(function(m){return m.timeUs < cur-500000;}).pop() || sorted[sorted.length-1];
-        if(prev) engine.playFromPosition(prev.timeUs/1000000);
-    }
-
-    function nextMarker() {
-        if(!engine.markers.length) return;
-        var cur = engine.getCurrentTime()*1000000;
-        var sorted = engine.markers.slice().sort(function(a,b){return a.timeUs-b.timeUs;});
-        var next = sorted.find(function(m){return m.timeUs > cur+500000;}) || sorted[0];
-        if(next) engine.playFromPosition(next.timeUs/1000000);
-    }
-
-    async function handleFileUpload(event) {
-        var file = event.target.files[0];
-        if(file) {
-            var ok = await engine.loadAudioFile(file);
-            if(ok) { document.getElementById('trackName').textContent = file.name.replace(/\.[^/.]+$/,''); document.getElementById('durationTime').textContent = formatTime(engine.getDuration()); }
-        }
-    }
-
-    // Auto start
-    window.addEventListener('load', function() {
-        logMsg('Página carregada. Iniciando em 1s...');
-        setTimeout(function() {
-            initAudio().catch(function() {
-                showError('Toque no botão para iniciar e permita o microfone');
-            });
-        }, 1000);
-    });
-
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(function(){});
-    }
-    </script>
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(function(){}); }
+</script>
 </body>
 </html>
