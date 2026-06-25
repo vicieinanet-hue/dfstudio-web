@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DF Studio Pro - Web Mixer</title>
+    <title>DF Studio Pro - Web</title>
     <style>
         :root {
             --bg: #080812; --surface: #12172A; --surfaceHigh: #1E293B; --surfaceVar: #0F172A;
@@ -14,15 +14,13 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, sans-serif; user-select: none; -webkit-user-select: none; }
         body { background: var(--bg); color: var(--text); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; max-width: 450px; margin: 0 auto; }
         
-        /* Typography */
         .mono { font-family: monospace; }
         .bold { font-weight: 800; }
-        .text-xs { font-size: 8px; } .text-sm { font-size: 10px; } .text-md { font-size: 12px; }
-
+        
         /* Topbar & Stats */
         .devices-row { display: flex; gap: 6px; padding: 6px; }
         .device-btn { flex: 1; background: var(--surface); border: 1px solid #333; border-radius: 7px; padding: 6px; display: flex; align-items: center; gap: 5px; color: var(--text); font-size: 10px; }
-        .stats-bar { display: flex; justify-content: space-evenly; background: var(--surface); padding: 4px; font-size: 9px; color: var(--textSec); }
+        .stats-bar { display: flex; justify-content: space-evenly; background: var(--surface); padding: 4px; font-size: 9px; color: var(--textSec); border-bottom: 1px solid var(--border); }
         .stats-bar span { color: var(--teal); font-weight: bold; }
         .stats-bar .dsp { color: var(--orange); }
 
@@ -64,13 +62,13 @@
         
         .knob-container { width: 38px; height: 38px; position: relative; margin: 2px 0; touch-action: none; }
         .knob-bg { position: absolute; inset: 0; border-radius: 50%; background: var(--surfaceHigh); border: 2px solid rgba(0,0,0,0.3); }
-        .knob-arc { position: absolute; inset: 2px; border-radius: 50%; border: 3px solid transparent; } /* Feito via canvas abaixo */
+        .knob-arc { position: absolute; inset: 2px; border-radius: 50%; border: 3px solid transparent; }
         .knob-dial { position: absolute; inset: 4px; border-radius: 50%; background: #222; display: flex; justify-content: center; transform: rotate(-135deg); }
         .knob-dot { width: 3px; height: 3px; background: currentColor; border-radius: 50%; margin-top: 3px; }
 
         /* Buttons Row */
         .btn-row { display: flex; width: 100%; gap: 3px; padding: 0 5px; margin-bottom: 3px; }
-        .sm-btn { flex: 1; height: 20px; border-radius: 4px; border: 1px solid var(--surfaceHigh); background: var(--surfaceHigh); color: var(--textSec); font-size: 8px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+        .sm-btn { flex: 1; height: 20px; border-radius: 4px; border: 1px solid var(--surfaceHigh); background: var(--surfaceHigh); color: var(--textSec); font-size: 8px; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .sm-btn.active { background: rgba(255,109,0,0.14); border-color: var(--orange); color: var(--orange); }
         .sm-btn.teal { background: rgba(0,188,212,0.14); border-color: var(--teal); color: var(--teal); }
         .sm-btn.solo.active { background: #0A1800; border-color: #76FF03; color: #76FF03; }
@@ -104,22 +102,25 @@
         .marker-item { display: flex; align-items: center; background: var(--bg); padding: 10px; border-radius: 8px; border: 1px solid rgba(0,188,212,0.2); margin-bottom: 8px; }
         .marker-time { background: rgba(0,188,212,0.1); color: var(--teal); padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; }
         .marker-name { flex: 1; margin: 0 10px; font-size: 13px; font-weight: bold; }
+
+        /* Splash inicial */
+        #startOverlay { position:fixed; inset:0; background:var(--bg); z-index:999; display:flex; align-items:center; justify-content:center; flex-direction:column; }
+        .start-btn { margin-top:20px; padding:15px 30px; background:var(--orange); color:#FFF; border:none; border-radius:30px; font-weight:bold; font-size:16px; cursor:pointer; }
     </style>
 </head>
 <body>
 
-    <div id="startOverlay" style="position:fixed;inset:0;background:#080812;z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;">
-        <h1 style="color:#FF6D00;font-weight:900;">DF STUDIO BETA</h1>
-        <button onclick="initAudio()" style="margin-top:20px;padding:15px 30px;background:#FF6D00;color:#FFF;border:none;border-radius:30px;font-weight:bold;font-size:16px;">INICIAR AUDIO ENGINE</button>
+    <div id="startOverlay">
+        <h1 style="color:var(--orange);font-weight:900;">DF STUDIO WEB</h1>
+        <button class="start-btn" onclick="initAudio()">LIGAR MOTOR DE ÁUDIO</button>
     </div>
 
     <div class="devices-row">
         <div class="device-btn" style="border-color:var(--orange)"><span style="color:var(--orange)">🎤</span> Microfone Padrão</div>
         <div class="device-btn" style="border-color:var(--teal)"><span style="color:var(--teal)">🔊</span> Saída Padrão</div>
     </div>
-
     <div class="stats-bar">
-        <div><span id="st-sr">48.0k</span> | <span id="st-buf">128buf</span> | LAT <span id="st-lat">10ms</span> | DSP <span class="dsp" id="st-dsp">15%</span></div>
+        <div><span id="st-sr">48.0k</span> | <span id="st-buf">128buf</span> | LAT <span id="st-lat">10ms</span> | DSP <span class="dsp" id="st-dsp">12%</span></div>
     </div>
 
     <div class="presets-row">
@@ -131,7 +132,7 @@
 
     <div class="player-widget">
         <div class="pw-header">
-            <div class="pw-title"><span style="color:var(--teal)">🎵</span> <span id="trackName">Nenhuma música</span></div>
+            <div class="pw-title"><span style="color:var(--teal)">🎵</span> <span id="trackName">Nenhum ficheiro</span></div>
             <div class="pw-badge" id="markerCount">0</div>
         </div>
         <div class="pw-seek-row">
@@ -170,7 +171,7 @@
 
             <div class="btn-row" style="margin-top:6px">
                 <div class="sm-btn" id="btn-fx" onclick="toggleBtn(this)" style="color:var(--orange)">FX</div>
-                <div class="sm-btn" id="btn-at" onclick="toggleBtn(this)" style="color:var(--orange)">AT</div>
+                <div class="sm-btn active" id="btn-at" onclick="toggleBtn(this)" style="color:var(--orange)">AT</div>
             </div>
             <div class="btn-row" style="color:var(--orange)">
                 <div class="sm-btn pan p1" onclick="setPan(1,-1)">L</div>
@@ -274,7 +275,7 @@
             <div class="dlg-title" id="dlgMarkerTitle">NOVO MARCADOR</div>
             <div style="font-size:12px;color:var(--textSec)">Nome do marcador:</div>
             <input type="text" id="inMarkerName" placeholder="Ex: Refrão, Solo...">
-            <button class="btn-primary" onclick="saveMarker()">SALVAR</button>
+            <button class="btn-primary" onclick="saveMarker()">GUARDAR</button>
             <button class="btn-sec" onclick="closeDlg('dlgMarker')">CANCELAR</button>
         </div>
     </div>
@@ -289,23 +290,23 @@
 
     <div class="overlay" id="dlgPreset">
         <div class="dialog">
-            <div class="dlg-title">Salvar Preset: <span id="presetTitleName" style="color:var(--orange)"></span></div>
-            <div style="font-size:11px;color:var(--orange);font-weight:bold">Você está salvando todos os efeitos e a afinação ATUAIS neste botão.</div>
+            <div class="dlg-title">Guardar Preset: <span id="presetTitleName" style="color:var(--orange)"></span></div>
+            <div style="font-size:11px;color:var(--orange);font-weight:bold">Irás guardar todos os efeitos e afinação ATUAIS neste botão.</div>
             <input type="text" id="inPresetName" placeholder="Nome do atalho">
-            <button class="btn-primary" onclick="confirmSavePreset()">SALVAR ATUAL</button>
+            <button class="btn-primary" onclick="confirmSavePreset()">GUARDAR ATUAL</button>
             <button class="btn-sec" onclick="closeDlg('dlgPreset')">CANCELAR</button>
         </div>
     </div>
 
 <script>
-    // --- ESTADO GLOBAL (Simulando StateFlows do Compose) ---
+    // --- ESTADO GLOBAL (Simulando o AudioEngine e SettingsManager do Android) ---
     const state = {
         gain1: 0.5, gain2: 0.4, gain3: 0.5, // 0..1
-        fad1: 0.5, fad2: 0.5, fad3: 0.5, // 0..1 (0.5 = 0dB)
+        fad1: 0.5, fad2: 0.5, fad3: 0.5, // 0..1 (0.5 = 0dB na escala GainMath)
         monSw: true
     };
     
-    // Matemática de Ganho idêntica ao GainMath.kt
+    // Matemática de Ganho convertida da classe GainMath.kt original
     function sliderToDb(v) {
         if(v <= 0.001) return -60;
         if(v <= 0.5) return -60 + (v/0.5)*60;
@@ -328,7 +329,7 @@
         return Math.pow(10, db/20);
     }
 
-    // --- UI KNOBS & FADERS ---
+    // --- RENDERIZAÇÃO DOS CONTROLOS (Canvas) ---
     function drawKnob(id, val) {
         let el = document.getElementById(`dial-${id}`);
         let angle = (val * 270) - 135;
@@ -348,11 +349,11 @@
         document.getElementById(`val-${id}`).innerText = formatDb(val);
     }
 
-    // Inicializa UI
+    // Inicialização da UI base
     ['gain1','gain2','gain3'].forEach(id => drawKnob(id, state[id]));
     ['fad1','fad2','fad3'].forEach(id => drawFader(id, state[id]));
 
-    // Interação
+    // Gestão de Toque/Arrastamento (Pointers)
     let activeDrag = null;
     function startKnob(e, id) { activeDrag = { id:id, type:'knob', startY: e.clientY, startVal: state[id] }; }
     function startFader(e, id, doubleCheck) { 
@@ -379,10 +380,9 @@
     });
     document.addEventListener('pointerup', () => activeDrag = null);
 
-    // Botões
+    // Gestão de Botões da UI
     function toggleBtn(el, type='normal', callback=null) { 
-        if(type==='solo' || type==='mute') el.classList.toggle('active');
-        else el.classList.toggle('active');
+        el.classList.toggle('active');
         if(callback) callback();
     }
     function setPan(ch, v) {
@@ -402,7 +402,7 @@
         b.style.color = state.monSw ? "var(--orange)" : "var(--textSec)";
     }
 
-    // --- PRESETS (Long Press) ---
+    // --- PRESETS RÁPIDOS (Pressão Longa para Editar) ---
     let pressTimer, activePresetObj = null;
     function presetDown(id, name, el) {
         document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
@@ -426,7 +426,7 @@
     function confirmSavePreset() {
         if(activePresetObj) {
             let newName = document.getElementById('inPresetName').value;
-            activePresetObj.el.childNodes[0].nodeValue = newName; // Altera só o texto
+            activePresetObj.el.childNodes[0].nodeValue = newName;
         }
         closeDlg('dlgPreset');
     }
@@ -436,7 +436,7 @@
         updateVols();
     }
 
-    // --- WEB AUDIO API & VU METERS ---
+    // --- MOTOR DE ÁUDIO WEB API ---
     let ctx, micNode, playNode, masterNode;
     let gainMic, gainPlay, gainMaster;
     let panMic, panPlay;
@@ -453,22 +453,25 @@
         
         let splitter = ctx.createChannelSplitter(2);
         
-        // Roteamento
+        // Estrutura de Roteamento de Sinal
         gainMic.connect(panMic); panMic.connect(anaMic); anaMic.connect(gainMaster);
         gainPlay.connect(panPlay); panPlay.connect(anaPlay); anaPlay.connect(gainMaster);
         
         gainMaster.connect(splitter);
-        splitter.connect(anaML, 0); splitter.connect(anaMR, 1); // Simulação L/R master
+        splitter.connect(anaML, 0); splitter.connect(anaMR, 1);
         gainMaster.connect(ctx.destination);
         
         try {
+            // Solicita permissão ao microfone e desliga o processamento nativo do telemóvel para melhorar qualidade e latência
             let stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation:false, autoGainControl:false, noiseSuppression:false}});
             ctx.createMediaStreamSource(stream).connect(gainMic);
-        } catch(e) {}
+        } catch(e) {
+            console.error("Microfone inacessível", e);
+        }
         
         document.getElementById('st-sr').innerText = (ctx.sampleRate/1000).toFixed(1)+'k';
-        document.getElementById('mute1').classList.remove('active'); // Liga mic
-        document.getElementById('mute3').classList.remove('active'); // Liga master
+        document.getElementById('mute1').classList.remove('active'); 
+        document.getElementById('mute3').classList.remove('active'); 
         updateVols();
         
         requestAnimationFrame(drawVUs);
@@ -480,13 +483,12 @@
         let m2 = document.getElementById('mute2').classList.contains('active');
         let m3 = document.getElementById('mute3').classList.contains('active');
         
-        // Fader * Gain (Preamp simulado)
         gainMic.gain.value = m1 ? 0 : sliderToLinear(state.fad1) * sliderToLinear(state.gain1);
         gainPlay.gain.value = m2 ? 0 : sliderToLinear(state.fad2) * sliderToLinear(state.gain2);
         gainMaster.gain.value = m3 ? 0 : sliderToLinear(state.fad3);
     }
 
-    // VU Draw Math (Igual Compose: 34 segments, Peak Hold)
+    // Lógica idêntica ao DfVuMeter do Compose (34 segmentos e Peak Hold de 16 frames)
     let vuData = new Uint8Array(128);
     let peaks = {mic:-60, play:-60, mL:-60, mR:-60};
     let peakTimers = {mic:0, play:0, mL:0, mR:0};
@@ -497,7 +499,7 @@
         let sum = 0; for(let i=0; i<vuData.length; i++) { let v = (vuData[i]-128)/128; sum += v*v; }
         let rms = Math.sqrt(sum/vuData.length);
         if(rms < 0.0001) return -60;
-        return Math.max(-60, 20 * Math.log10(rms) + 12); // +12 boost visual
+        return Math.max(-60, 20 * Math.log10(rms) + 12);
     }
 
     function renderVu(id, db, key) {
@@ -506,7 +508,6 @@
         let ctx = cvs.ctx, w = cvs.width, h = cvs.height;
         ctx.clearRect(0,0,w,h);
         
-        // Peak Hold Logic
         if(db >= peaks[key]) { peaks[key] = db; peakTimers[key] = 0; }
         else { peakTimers[key]++; if(peakTimers[key]>16) peaks[key] = Math.max(db, peaks[key]-1.4); }
 
@@ -522,11 +523,9 @@
             ctx.fillRect(2, h - (i+1)*segH - i*gap, w-4, segH);
         }
         
-        // Linhas guias (-18, -12, -6, 0)
         ctx.fillStyle = 'rgba(255,255,255,0.3)';
         [-18,-12,-6,0].forEach(d => { let y = h - ((d-minDb)/(maxDb-minDb))*h; ctx.fillRect(0,y,w,1); });
         
-        // Peak Mark
         if(peaks[key] > minDb) {
             let py = h - ((peaks[key]-minDb)/(maxDb-minDb))*h;
             ctx.fillStyle = peaks[key]>=0 ? '#FF1744' : '#FFF';
@@ -540,7 +539,6 @@
         renderVu('vu-masterL', getDb(anaML), 'mL');
         renderVu('vu-masterR', getDb(anaMR), 'mR');
         
-        // Atualiza UI Player
         if(isPlaying && audioBuf) {
             let t = ctx.currentTime - startT;
             if(t >= audioBuf.duration) stopTrack();
@@ -552,7 +550,7 @@
         requestAnimationFrame(drawVUs);
     }
 
-    // --- PLAYER & MARCADORES ---
+    // --- LEITOR DE ÁUDIO & MARCADORES DE FAIXAS ---
     let markers = [];
     function fmtT(s) { let m=Math.floor(s/60), sc=Math.floor(s%60); return `${m.toString().padStart(2,'0')}:${sc.toString().padStart(2,'0')}`; }
     
@@ -595,7 +593,6 @@
         if(isPlaying) playFrom(t); else pauseT = t;
     });
 
-    // Marcadores
     function loadMarkers() {
         let saved = localStorage.getItem('df_web_marks_' + document.getElementById('trackName').innerText);
         markers = saved ? JSON.parse(saved) : [];
@@ -616,11 +613,10 @@
         let list = document.getElementById('markerListDiv'); list.innerHTML = '';
         if(!audioBuf) return;
         markers.forEach((m, i) => {
-            // Desenha na barra
             let mk = document.createElement('div'); mk.className = 'seek-marker';
             mk.style.left = (m.t / audioBuf.duration * 100) + '%';
             c.appendChild(mk);
-            // Lista
+            
             let div = document.createElement('div'); div.className = 'marker-item';
             div.innerHTML = `<div class="marker-time">${fmtT(m.t)}</div><div class="marker-name">${m.name}</div><button class="pw-btn" onclick="playFrom(${m.t}); closeDlg('dlgList')">▶</button>`;
             list.appendChild(div);
@@ -635,7 +631,7 @@
         if(target) playFrom(target.t);
     }
 
-    // Dialogs
+    // Gestão das Janelas Modais
     function openAddMarker() { document.getElementById('inMarkerName').value=''; document.getElementById('dlgMarker').style.display='flex'; }
     function openListMarkers() { document.getElementById('dlgList').style.display='flex'; }
     function closeDlg(id) { document.getElementById(id).style.display='none'; }
