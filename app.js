@@ -1132,3 +1132,70 @@ window.exportBackup = exportBackup;
 window.importBackup = importBackup;
 window.startRecording = startRecording;
 window.stopRecording = stopRecording;
+// ===== TUNER UI IMPROVEMENTS =====
+function updateTunerUI(freq, note) {
+    if (!state.tunerActive) return;
+    
+    const noteEl = document.getElementById('tunerNote');
+    const freqEl = document.getElementById('tunerFreq');
+    const meterEl = document.getElementById('tunerMeter');
+    const statusEl = document.getElementById('tunerStatus');
+    
+    if (!noteEl) return;
+    
+    noteEl.textContent = note || '--';
+    noteEl.style.color = note && note !== '--' ? '#00BCD4' : '#666';
+    
+    freqEl.textContent = (freq || 0).toFixed(1) + ' Hz';
+
+    // Calcular offset em cents
+    let targetFreq = 0;
+    if (state.tunerString >= 0 && state.tunerString < STRING_FREQS.length) {
+        targetFreq = STRING_FREQS[state.tunerString];
+    } else if (freq > 0) {
+        // Encontrar a corda mais próxima
+        let minDiff = Infinity;
+        STRING_FREQS.forEach((f, i) => {
+            const diff = Math.abs(freq - f);
+            if (diff < minDiff) { minDiff = diff; targetFreq = f; }
+        });
+    }
+    
+    if (targetFreq > 0 && freq > 0) {
+        const cents = 1200 * Math.log2(freq / targetFreq);
+        const percent = 50 + cents / 50 * 25;
+        meterEl.style.width = Math.max(0, Math.min(100, percent)) + '%';
+        
+        const absCents = Math.abs(cents);
+        let status = 'Toque uma nota';
+        let color = '#FF6D00';
+        if (absCents < 3) { 
+            status = '✅ AFINADO!'; 
+            color = '#76FF03'; 
+        } else if (cents < 0) { 
+            status = '🔽 BAIXO ' + Math.round(absCents) + 'c'; 
+            color = '#FFD600'; 
+        } else { 
+            status = '🔼 ALTO ' + Math.round(absCents) + 'c'; 
+            color = '#FF1744'; 
+        }
+        statusEl.textContent = status;
+        meterEl.style.background = color;
+    } else {
+        meterEl.style.width = '50%';
+        statusEl.textContent = freq > 0 ? 'Detectando...' : 'Toque uma nota';
+        meterEl.style.background = '#FF6D00';
+    }
+}
+
+// Sobrescrever a função openTuner para melhorar
+const originalOpenTuner = window.openTuner;
+window.openTuner = function() {
+    originalOpenTuner();
+    // Reset UI
+    document.getElementById('tunerMeter').style.width = '50%';
+    document.getElementById('tunerMeter').style.background = '#FF6D00';
+    document.getElementById('tunerStatus').textContent = 'Toque uma nota';
+    document.getElementById('tunerNote').textContent = '--';
+    document.getElementById('tunerFreq').textContent = '0 Hz';
+};
